@@ -6,7 +6,7 @@ import { CITIES, UNIVERSITIES, BRANCHES as MOCK_BRANCHES } from '../../db/mockDa
 import { dbService } from '../../services/dbService';
 
 export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
-  const { login, signup, authError, loginWithGoogle } = useAuth();
+  const { login, signup, authError } = useAuth();
   const [isLogin, setIsLogin] = useState(() => {
     return localStorage.getItem('cm_auth_tab') !== 'signup';
   });
@@ -56,22 +56,6 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
       setTimeout(() => {
         redirectAfterAuth();
       }, 1000);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await loginWithGoogle();
-      // Google redirect will occur here for real Supabase. For mock local db:
-      const loggedIn = localStorage.getItem('collegemate_logged_in');
-      if (loggedIn) {
-        redirectAfterAuth();
-      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -210,41 +194,6 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
                 <LogIn className="h-5 w-5" />
                 <span>{loading ? 'Signing In...' : 'Sign In'}</span>
               </button>
-
-              {/* Divider */}
-              <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-brand-border"></div>
-                <span className="flex-shrink mx-4 text-brand-muted text-xs">Or</span>
-                <div className="flex-grow border-t border-brand-border"></div>
-              </div>
-
-              {/* Continue with Google */}
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="flex h-12 w-full items-center justify-center space-x-2.5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/40 font-medium text-brand-heading shadow-sm focus:outline-none disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.72 14.9.96 12 .96 7.37.96 3.4 3.63 1.5 7.51l3.79 2.94c.89-2.67 3.39-4.41 6.71-4.41z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.46h6.44c-.28 1.47-1.11 2.72-2.35 3.56l3.64 2.82c2.13-1.97 3.76-4.87 3.76-8.49z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.29 14.55c-.23-.68-.36-1.41-.36-2.16s.13-1.48.36-2.16L1.5 7.29C.68 8.93.21 10.77.21 12.71c0 1.94.47 3.78 1.29 5.42l3.79-2.94-.08-.64z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23.04c3.24 0 5.97-1.07 7.96-2.91l-3.64-2.82c-1.1.74-2.5 1.18-4.32 1.18-3.32 0-6.14-2.18-7.14-5.14L1.07 16.2c1.9 3.88 5.87 6.55 10.93 6.55z"
-                  />
-                </svg>
-                <span>Continue with Google</span>
-              </button>
             </form>
           ) : (
             /* SIGN UP FORM */
@@ -292,41 +241,6 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
               >
                 <UserPlus className="h-5 w-5" />
                 <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
-              </button>
-
-              {/* Divider */}
-              <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-brand-border"></div>
-                <span className="flex-shrink mx-4 text-brand-muted text-xs">Or</span>
-                <div className="flex-grow border-t border-brand-border"></div>
-              </div>
-
-              {/* Continue with Google */}
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="flex h-12 w-full items-center justify-center space-x-2.5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/40 font-medium text-brand-heading shadow-sm focus:outline-none disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.72 14.9.96 12 .96 7.37.96 3.4 3.63 1.5 7.51l3.79 2.94c.89-2.67 3.39-4.41 6.71-4.41z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.46h6.44c-.28 1.47-1.11 2.72-2.35 3.56l3.64 2.82c2.13-1.97 3.76-4.87 3.76-8.49z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.29 14.55c-.23-.68-.36-1.41-.36-2.16s.13-1.48.36-2.16L1.5 7.29C.68 8.93.21 10.77.21 12.71c0 1.94.47 3.78 1.29 5.42l3.79-2.94-.08-.64z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23.04c3.24 0 5.97-1.07 7.96-2.91l-3.64-2.82c-1.1.74-2.5 1.18-4.32 1.18-3.32 0-6.14-2.18-7.14-5.14L1.07 16.2c1.9 3.88 5.87 6.55 10.93 6.55z"
-                  />
-                </svg>
-                <span>Continue with Google</span>
               </button>
             </form>
           )}

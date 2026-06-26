@@ -361,45 +361,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async () => {
-    setAuthError(null);
-    try {
-      if (supabase) {
-        console.log("[OAuth] OAuth start. Redirect URL:", `${window.location.origin}/auth/callback`);
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`
-          }
-        });
-        if (error) throw error;
-        return true;
-      } else {
-        // Mock Google login
-        const sessionUser = {
-          id: 'google-mock-id',
-          email: 'googleuser@gmail.com',
-          role: 'student',
-          profile: {
-            name: 'Google User',
-            admissionType: null,
-            score: null,
-            category: null,
-            gender: null,
-            homeUniversity: null,
-            branchPreference: null,
-            savedColleges: []
-          }
-        };
-        localStorage.setItem('collegemate_logged_in', JSON.stringify(sessionUser));
-        setUser(sessionUser);
-        return true;
-      }
-    } catch (err) {
-      setAuthError(err.message || 'Google login failed');
-      throw err;
-    }
-  };
+
 
   const logout = async () => {
     try {
@@ -485,7 +447,7 @@ export const AuthProvider = ({ children }) => {
     login,
     adminLogin,
     signup,
-    loginWithGoogle,
+
     logout,
     updateProfile,
     toggleSavedCollege
