@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #4f46e5;
+  --color-accent: #10b981;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-card: var(--brand-card);
+  --color-brand-border: var(--brand-border);
+  --color-brand-heading: var(--brand-heading);
+  --color-brand-body: var(--brand-body);
+  --color-brand-muted: var(--brand-muted);
+
+  --radius-btn: 12px;
+  --radius-inp: 12px;
+  --radius-card: 16px;
+  --radius-modal: 20px;
+  --radius-tbl: 12px;
+}
+
+:root {
+  --brand-bg: #f8fafc;
+  --brand-card: #ffffff;
+  --brand-border: #e2e8f0;
+  --brand-heading: #0f172a;
+  --brand-body: #475569;
+  --brand-muted: #64748b;
+}
+
+.dark {
+  --brand-bg: #020617;
+  --brand-card: #0f172a;
+  --brand-border: #334155;
+  --brand-heading: #f8fafc;
+  --brand-body: #cbd5e1;
+  --brand-muted: #94a3b8;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--brand-bg);
+  color: var(--brand-body);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+/* Custom styles and utilities */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--brand-border);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-muted);
+}
