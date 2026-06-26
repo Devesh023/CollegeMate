@@ -22,7 +22,8 @@ export const cache = {
   cutoffs: null,
   years: null,
   collegeByCode: new Map(),
-  cutoffsFiltered: new Map()
+  cutoffsFiltered: new Map(),
+  databaseCounts: null
 };
 
 export const mapUniversityByCity = (city, defaultUni) => {
@@ -1324,19 +1325,26 @@ export const dbService = {
   },
 
   async getDatabaseCounts() {
+    if (cache.databaseCounts) {
+      return cache.databaseCounts;
+    }
     if (isSupabaseConfigured) {
       try {
-        const { count: colCount, error: colErr } = await supabase.from('colleges').select('*', { count: 'exact', head: true });
-        if (colErr) throw colErr;
-        const { count: brCount, error: brErr } = await supabase.from('branches').select('*', { count: 'exact', head: true });
-        if (brErr) throw brErr;
-        const { count: cutCount, error: cutErr } = await supabase.from('cutoffs').select('*', { count: 'exact', head: true });
-        if (cutErr) throw cutErr;
-        return {
-          colleges: colCount || 0,
-          branches: brCount || 0,
-          cutoffs: cutCount || 0
+        const [colRes, brRes, cutRes] = await Promise.all([
+          supabase.from('colleges').select('*', { count: 'exact', head: true }),
+          supabase.from('branches').select('*', { count: 'exact', head: true }),
+          supabase.from('cutoffs').select('*', { count: 'exact', head: true })
+        ]);
+        if (colRes.error) throw colRes.error;
+        if (brRes.error) throw brRes.error;
+        if (cutRes.error) throw cutRes.error;
+        const counts = {
+          colleges: colRes.count || 0,
+          branches: brRes.count || 0,
+          cutoffs: cutRes.count || 0
         };
+        cache.databaseCounts = counts;
+        return counts;
       } catch (e) {
         console.error('Failed to get database counts', e);
         return { colleges: 0, branches: 0, cutoffs: 0 };
@@ -1350,6 +1358,23 @@ export const dbService = {
         branches: brs.length,
         cutoffs: cuts.length
       };
+    }
+  },
+
+  async getProfile(userId) {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    } else {
+      initializeLocalDb();
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS));
+      const matched = users.find(u => u.id === userId);
+      return matched ? { id: matched.id, email: matched.email, role: matched.role, ...matched.profile } : null;
     }
   },
 

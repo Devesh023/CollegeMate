@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   TrendingUp, 
   Search, 
@@ -11,6 +10,7 @@ import {
   BookOpen, 
   Users 
 } from 'lucide-react';
+import FeedbackSection from './FeedbackSection';
 
 export default function Landing({ setActiveTab }) {
   const features = [
@@ -292,6 +292,7 @@ export default function Landing({ setActiveTab }) {
         </div>
       </div>
       
+      <FeedbackSection />
     </div>
   );
 }

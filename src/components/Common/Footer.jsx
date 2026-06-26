@@ -16,10 +16,38 @@ export default function Footer({ setActiveTab }) {
           </span>
         </div>
 
-        <div className="flex space-x-6 text-sm text-brand-muted">
-          <button onClick={() => setActiveTab('predictor')} className="hover:text-primary transition-colors">Predictor</button>
-          <button onClick={() => setActiveTab('search')} className="hover:text-primary transition-colors">Search Colleges</button>
-          <button onClick={() => setActiveTab('compare')} className="hover:text-primary transition-colors">Compare</button>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-brand-muted justify-center md:justify-start">
+          <button onClick={() => setActiveTab('predictor')} className="hover:text-primary transition-colors cursor-pointer">Predictor</button>
+          <button onClick={() => setActiveTab('search')} className="hover:text-primary transition-colors cursor-pointer">Search Colleges</button>
+          <button onClick={() => setActiveTab('compare')} className="hover:text-primary transition-colors cursor-pointer">Compare</button>
+          <button 
+            onClick={() => {
+              setActiveTab('landing');
+              setTimeout(() => {
+                const el = document.getElementById('feedback-section');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }, 100);
+            }} 
+            className="hover:text-primary transition-colors cursor-pointer"
+          >
+            Feedback
+          </button>
+          <button 
+            onClick={() => {
+              setActiveTab('landing');
+              setTimeout(() => {
+                const el = document.getElementById('founder-section');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                }
+              }, 100);
+            }} 
+            className="hover:text-primary transition-colors cursor-pointer"
+          >
+            Meet the Founder
+          </button>
         </div>
 
         <p className="text-xs text-brand-muted">

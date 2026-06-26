@@ -25,16 +25,12 @@ export const AuthProvider = ({ children }) => {
   const ensureUserProfile = async (session) => {
     if (!session || !supabase) return null;
     try {
-      const profiles = await dbService.getProfiles();
-      let userProfile = profiles.find(p => p.id === session.user.id);
+      let userProfile = await dbService.getProfile(session.user.id);
       if (!userProfile) {
         const defaultProfile = {
           id: session.user.id,
           full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-          admission_type: 'CET',
-          score: 0,
-          category: 'OPEN',
-          gender: 'Male'
+          email: session.user.email
         };
         const { data: newProfile, error } = await supabase
           .from('profiles')
@@ -47,8 +43,7 @@ export const AuthProvider = ({ children }) => {
           userProfile = newProfile[0];
         } else {
           // fetch again as a fallback
-          const secondProfiles = await dbService.getProfiles();
-          userProfile = secondProfiles.find(p => p.id === session.user.id);
+          userProfile = await dbService.getProfile(session.user.id);
         }
       }
       return userProfile;
@@ -84,34 +79,81 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (supabase) {
-          // Supabase session management
+          // Session initialization measurement
+          console.time("Session Init");
           const { data: { session } } = await supabase.auth.getSession();
+          console.timeEnd("Session Init");
+
           if (session && !adminAuthenticated) {
-            const userProfile = await ensureUserProfile(session);
-            const savedColleges = await dbService.getSavedCollegeIds(session.user.id);
+            // Render dashboard shell immediately by setting basic user info
+            // and clearing the auth loading state. Profile load runs in the background.
             setUser({
               id: session.user.id,
               email: session.user.email,
-              role: userProfile?.role || 'student',
-              profile: mapProfile(userProfile, savedColleges) || { name: session.user.email.split('@')[0], savedColleges: [] }
+              role: 'student',
+              profile: { name: session.user.email.split('@')[0], savedColleges: [] }
             });
+            setLoading(false);
+
+            // User profile fetch measurement
+            console.time("Profile Fetch");
+            Promise.all([
+              ensureUserProfile(session),
+              dbService.getSavedCollegeIds(session.user.id)
+            ]).then(([userProfile, savedColleges]) => {
+              console.timeEnd("Profile Fetch");
+              setUser({
+                id: session.user.id,
+                email: session.user.email,
+                role: userProfile?.role || 'student',
+                profile: mapProfile(userProfile, savedColleges) || { name: session.user.email.split('@')[0], savedColleges: [] }
+              });
+            }).catch(err => {
+              console.error("Failed background profile fetch", err);
+              console.timeEnd("Profile Fetch");
+            });
+          } else {
+            setLoading(false);
           }
           
           // Listen for auth changes
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
               // Real Supabase session active (student). Clear local admin flags.
               localStorage.removeItem('adminAuthenticated');
               localStorage.removeItem('adminEmail');
               localStorage.removeItem('adminRole');
               
-              const userProfile = await ensureUserProfile(session);
-              const savedColleges = await dbService.getSavedCollegeIds(session.user.id);
-              setUser({
-                id: session.user.id,
-                email: session.user.email,
-                role: userProfile?.role || 'student',
-                profile: mapProfile(userProfile, savedColleges) || { name: session.user.email.split('@')[0], savedColleges: [] }
+              // Pre-set basic user details so user is immediately logged in
+              // and the dashboard/routing is not blocked.
+              setUser(prev => {
+                if (prev && prev.id === session.user.id && prev.profile && !prev.profile.isPlaceholder) {
+                  return prev;
+                }
+                return {
+                  id: session.user.id,
+                  email: session.user.email,
+                  role: 'student',
+                  profile: { name: session.user.email.split('@')[0], savedColleges: [], isPlaceholder: true }
+                };
+              });
+
+              // Load profile and saved colleges concurrently in background
+              console.time("Profile Fetch");
+              Promise.all([
+                ensureUserProfile(session),
+                dbService.getSavedCollegeIds(session.user.id)
+              ]).then(([userProfile, savedColleges]) => {
+                console.timeEnd("Profile Fetch");
+                setUser({
+                  id: session.user.id,
+                  email: session.user.email,
+                  role: userProfile?.role || 'student',
+                  profile: mapProfile(userProfile, savedColleges) || { name: session.user.email.split('@')[0], savedColleges: [] }
+                });
+              }).catch(err => {
+                console.error("Failed to load user profile on auth change:", err);
+                console.timeEnd("Profile Fetch");
               });
             } else {
               // Only nullify if not admin authenticated
@@ -131,9 +173,8 @@ export const AuthProvider = ({ children }) => {
             const loggedInUser = localStorage.getItem('collegemate_logged_in');
             if (loggedInUser) {
               const parsedUser = JSON.parse(loggedInUser);
-              // Refresh from current local db to get latest profiles/favorites
-              const profiles = await dbService.getProfiles();
-              const latestProfile = profiles.find(p => p.id === parsedUser.id);
+              // Fetch only matching profile instead of all profiles
+              const latestProfile = await dbService.getProfile(parsedUser.id);
               
               setUser({
                 id: parsedUser.id,
@@ -143,10 +184,10 @@ export const AuthProvider = ({ children }) => {
               });
             }
           }
+          setLoading(false);
         }
       } catch (err) {
         console.error('Failed to initialize auth', err);
-      } finally {
         setLoading(false);
       }
     };
@@ -327,7 +368,7 @@ export const AuthProvider = ({ children }) => {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/dashboard`
+            redirectTo: `${window.location.origin}/auth/callback`
           }
         });
         if (error) throw error;

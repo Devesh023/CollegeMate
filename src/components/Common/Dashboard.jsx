@@ -41,19 +41,27 @@ export default function Dashboard({ setActiveTab, setCompareColleges }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.time("Dashboard Load");
         setLoading(true);
-        const [colList, dbCounts] = await Promise.all([
-          dbService.getColleges(),
-          dbService.getDatabaseCounts()
+
+        const studentAdmissionType = user?.profile?.admissionType || 'CET';
+
+        // Kick off all promises in parallel
+        const colListPromise = dbService.getColleges();
+        const dbCountsPromise = dbService.getDatabaseCounts();
+        const cutoffsPromise = user && user.role === 'student'
+          ? dbService.getCutoffsFiltered({ admissionType: studentAdmissionType })
+          : Promise.resolve([]);
+
+        const [colList, dbCounts, studentCutoffs] = await Promise.all([
+          colListPromise,
+          dbCountsPromise,
+          cutoffsPromise
         ]);
+
         setColleges(colList);
 
-        let studentCutoffs = [];
         if (user && user.role === 'student') {
-          const studentAdmissionType = user.profile.admissionType || 'CET';
-          studentCutoffs = await dbService.getCutoffsFiltered({
-            admissionType: studentAdmissionType
-          });
           setCutoffs(studentCutoffs);
 
           const profile = {
@@ -86,6 +94,7 @@ export default function Dashboard({ setActiveTab, setCompareColleges }) {
         console.error('Error fetching dashboard data', err);
       } finally {
         setLoading(false);
+        console.timeEnd("Dashboard Load");
       }
     };
     fetchData();

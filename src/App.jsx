@@ -12,6 +12,7 @@ const AdminPanel = React.lazy(() => import('./components/Admin'));
 const AdminLogin = React.lazy(() => import('./components/Admin/AdminLogin'));
 const Profile = React.lazy(() => import('./components/Common/Profile'));
 const Auth = React.lazy(() => import('./components/Common/Auth'));
+const AuthCallback = React.lazy(() => import('./components/Common/AuthCallback'));
 const AdminDebug = React.lazy(() => import('./components/Admin/AdminDebug'));
 const CollegeDetails = React.lazy(() => import('./components/Search/CollegeDetails'));
 const BranchExplorer = React.lazy(() => import('./components/Search/BranchExplorer'));
@@ -50,6 +51,7 @@ function AppContent() {
     if (path === '/compare') return 'compare';
     if (path === '/profile') return 'profile';
     if (path === '/login') return 'auth';
+    if (path === '/auth/callback' || path === '/auth/callback/') return 'auth-callback';
     return 'landing';
   };
 
@@ -218,6 +220,7 @@ function AppContent() {
       else if (tab === 'compare') path = '/compare';
       else if (tab === 'profile') path = '/profile';
       else if (tab === 'auth') path = '/login';
+      else if (tab === 'auth-callback') path = '/auth/callback';
       else if (tab === 'college-details') path = `/college/${selectedCollegeCode}`;
       window.history.pushState(null, '', path);
       setTabHistory(prev => [...prev, tab]);
@@ -309,6 +312,9 @@ function AppContent() {
               authWarning={authWarning} 
               setAuthWarning={setAuthWarning} 
             />
+          )}
+          {activeTab === 'auth-callback' && (
+            <AuthCallback setActiveTab={handleSetActiveTab} />
           )}
         </React.Suspense>
       </main>
