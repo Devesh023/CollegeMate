@@ -365,6 +365,7 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
     try {
       if (supabase) {
+        console.log("[OAuth] OAuth start. Redirect URL:", `${window.location.origin}/auth/callback`);
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {

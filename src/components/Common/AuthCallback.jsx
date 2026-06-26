@@ -9,7 +9,49 @@ export default function AuthCallback({ setActiveTab }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log("[OAuth] Callback arrival. Pathname:", window.location.pathname, "Hash:", window.location.hash);
     let active = true;
+    let redirected = false;
+
+    function handleRedirect(sessionObj) {
+      if (redirected) return;
+      redirected = true;
+
+      console.log("[OAuth] Session restored. User:", user, "Session:", sessionObj);
+      setStatus('Session restored! Finalizing redirect...');
+      
+      // Read cm_auth_redirect and fallback to dashboard
+      const redirect = localStorage.getItem('cm_auth_redirect') || 'dashboard';
+      localStorage.removeItem('cm_auth_redirect');
+      
+      // Clear callback URL in browser history using replaceState
+      let targetPath = '/dashboard';
+      if (redirect === 'predictor') targetPath = '/predictor';
+      else if (redirect === 'search') targetPath = '/search';
+      else if (redirect === 'branches') targetPath = '/branches';
+      else if (redirect === 'rankings') targetPath = '/rankings';
+      else if (redirect === 'compare') targetPath = '/compare';
+      else if (redirect === 'profile') targetPath = '/profile';
+      else if (redirect === 'landing') targetPath = '/';
+
+      console.log("[OAuth] Dashboard redirect to:", redirect);
+      window.history.replaceState(null, '', targetPath);
+      setActiveTab(redirect);
+    }
+
+    // Listen for auth state changes directly on the callback page.
+    // If the session resolves asynchronously, we will capture it here!
+    let subscription = null;
+    if (supabase) {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log("[OAuth] onAuthStateChange event in Callback:", event, "Session present:", !!session);
+        if (!active) return;
+        if (session) {
+          handleRedirect(session);
+        }
+      });
+      subscription = data?.subscription;
+    }
 
     async function checkSession() {
       try {
@@ -22,28 +64,10 @@ export default function AuthCallback({ setActiveTab }) {
         if (!active) return;
 
         // If we have a session or if the session resolution is complete
-        if (session || (!authLoading && user)) {
-          setStatus('Session restored! Finalizing redirect...');
-          
-          // Read cm_auth_redirect and fallback to dashboard
-          const redirect = localStorage.getItem('cm_auth_redirect') || 'dashboard';
-          localStorage.removeItem('cm_auth_redirect');
-          
-          // Clear callback URL in browser history using replaceState
-          let targetPath = '/dashboard';
-          if (redirect === 'predictor') targetPath = '/predictor';
-          else if (redirect === 'search') targetPath = '/search';
-          else if (redirect === 'branches') targetPath = '/branches';
-          else if (redirect === 'rankings') targetPath = '/rankings';
-          else if (redirect === 'compare') targetPath = '/compare';
-          else if (redirect === 'profile') targetPath = '/profile';
-          else if (redirect === 'landing') targetPath = '/';
-
-          window.history.replaceState(null, '', targetPath);
-          setActiveTab(redirect);
-        } else if (!authLoading && !user) {
-          // If auth loading finished, but there's no user session, fail
-          throw new Error('No user session resolved after authentication callback.');
+        if (session) {
+          handleRedirect(session);
+        } else if (!authLoading && user) {
+          handleRedirect(null);
         }
       } catch (err) {
         console.error('[AuthCallback] Authentication check failed:', err);
@@ -57,7 +81,7 @@ export default function AuthCallback({ setActiveTab }) {
 
     // Fallback: 5-second timeout
     const timeout = setTimeout(() => {
-      if (active && !user && !error) {
+      if (active && !user && !error && !redirected) {
         console.warn('[AuthCallback] Session check timed out. Redirecting to landing.');
         window.history.replaceState(null, '', '/');
         setActiveTab('landing');
@@ -67,6 +91,9 @@ export default function AuthCallback({ setActiveTab }) {
     return () => {
       active = false;
       clearTimeout(timeout);
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [user, authLoading, error, setActiveTab]);
 
