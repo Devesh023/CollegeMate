@@ -12,12 +12,12 @@ export const AuthProvider = ({ children }) => {
     if (!userProfile) return null;
     return {
       name: userProfile.full_name || userProfile.name || '',
-      admissionType: userProfile.admission_type || userProfile.admissionType || 'CET',
-      score: userProfile.score !== undefined ? parseFloat(userProfile.score) : 0,
-      category: userProfile.category || 'OPEN',
-      gender: userProfile.gender || 'Male',
-      homeUniversity: userProfile.home_university || userProfile.homeUniversity || 'SPPU (Pune)',
-      branchPreference: userProfile.branch_preference || userProfile.branchPreference || 'Computer Engineering',
+      admissionType: userProfile.admission_type || userProfile.admissionType || null,
+      score: (userProfile.score !== undefined && userProfile.score !== null) ? parseFloat(userProfile.score) : null,
+      category: userProfile.category || null,
+      gender: userProfile.gender || null,
+      homeUniversity: userProfile.home_university || userProfile.homeUniversity || null,
+      branchPreference: userProfile.branch_preference || userProfile.branchPreference || null,
       savedColleges: savedColleges
     };
   };
@@ -332,12 +332,12 @@ export const AuthProvider = ({ children }) => {
           role: 'student',
           profile: {
             name: profileData.name,
-            admissionType: 'CET',
-            score: 0,
-            category: 'OPEN',
-            gender: 'Male',
-            homeUniversity: 'SPPU (Pune)',
-            branchPreference: 'Computer Engineering',
+            admissionType: null,
+            score: null,
+            category: null,
+            gender: null,
+            homeUniversity: null,
+            branchPreference: null,
             savedColleges: []
           }
         };
@@ -382,12 +382,12 @@ export const AuthProvider = ({ children }) => {
           role: 'student',
           profile: {
             name: 'Google User',
-            admissionType: 'CET',
-            score: 0,
-            category: 'OPEN',
-            gender: 'Male',
-            homeUniversity: 'SPPU (Pune)',
-            branchPreference: 'Computer Engineering',
+            admissionType: null,
+            score: null,
+            category: null,
+            gender: null,
+            homeUniversity: null,
+            branchPreference: null,
             savedColleges: []
           }
         };

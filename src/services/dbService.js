@@ -1393,13 +1393,15 @@ export const dbService = {
 
   async updateProfile(userId, profileUpdates) {
     const dbProfile = {
-      full_name: profileUpdates.name || profileUpdates.full_name,
-      admission_type: profileUpdates.admissionType || profileUpdates.admission_type,
-      category: profileUpdates.category,
-      gender: profileUpdates.gender,
-      home_university: profileUpdates.homeUniversity || profileUpdates.home_university,
-      score: profileUpdates.score !== undefined ? parseFloat(profileUpdates.score) : undefined,
-      branch_preference: profileUpdates.branchPreference || profileUpdates.branch_preference,
+      full_name: profileUpdates.name !== undefined ? profileUpdates.name : (profileUpdates.full_name !== undefined ? profileUpdates.full_name : undefined),
+      admission_type: profileUpdates.admissionType !== undefined ? (profileUpdates.admissionType || null) : undefined,
+      category: profileUpdates.category !== undefined ? (profileUpdates.category || null) : undefined,
+      gender: profileUpdates.gender !== undefined ? (profileUpdates.gender || null) : undefined,
+      home_university: profileUpdates.homeUniversity !== undefined ? (profileUpdates.homeUniversity || null) : undefined,
+      score: (profileUpdates.score !== undefined && profileUpdates.score !== null && profileUpdates.score !== '') 
+        ? parseFloat(profileUpdates.score) 
+        : (profileUpdates.score === null || profileUpdates.score === '' ? null : undefined),
+      branch_preference: profileUpdates.branchPreference !== undefined ? (profileUpdates.branchPreference || null) : undefined,
       updated_at: new Date()
     };
 

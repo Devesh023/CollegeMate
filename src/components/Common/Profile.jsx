@@ -13,12 +13,12 @@ export default function Profile({ onBack }) {
 
   // Form states
   const [name, setName] = useState(user?.profile?.name || '');
-  const [admissionType, setAdmissionType] = useState(user?.profile?.admissionType || 'CET');
-  const [score, setScore] = useState(user?.profile?.score || '');
-  const [category, setCategory] = useState(user?.profile?.category || 'OPEN');
-  const [gender, setGender] = useState(user?.profile?.gender || 'Male');
-  const [homeUniversity, setHomeUniversity] = useState(user?.profile?.homeUniversity || 'SPPU (Pune)');
-  const [branchPreference, setBranchPreference] = useState(user?.profile?.branchPreference || 'Computer Engineering');
+  const [admissionType, setAdmissionType] = useState(user?.profile?.admissionType || '');
+  const [score, setScore] = useState(user?.profile?.score ?? '');
+  const [category, setCategory] = useState(user?.profile?.category || '');
+  const [gender, setGender] = useState(user?.profile?.gender || '');
+  const [homeUniversity, setHomeUniversity] = useState(user?.profile?.homeUniversity || '');
+  const [branchPreference, setBranchPreference] = useState(user?.profile?.branchPreference || '');
 
   useEffect(() => {
     const loadBranches = async () => {
@@ -36,8 +36,8 @@ export default function Profile({ onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !score) {
-      setErrorMsg('Please fill in all required fields');
+    if (!name) {
+      setErrorMsg('Full Name is required');
       return;
     }
     setLoading(true);
@@ -46,12 +46,12 @@ export default function Profile({ onBack }) {
     try {
       await updateProfile({
         name,
-        admissionType,
-        score: parseFloat(score),
-        category,
-        gender,
-        homeUniversity,
-        branchPreference
+        admissionType: admissionType || null,
+        score: score !== '' ? parseFloat(score) : null,
+        category: category || null,
+        gender: gender || null,
+        homeUniversity: homeUniversity || null,
+        branchPreference: branchPreference || null
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -126,20 +126,20 @@ export default function Profile({ onBack }) {
                 onChange={(e) => setAdmissionType(e.target.value)}
                 className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-3.5 text-brand-heading focus:border-primary focus:outline-none text-sm"
               >
+                <option value="">Not Set</option>
                 <option value="CET">First Year Engineering (MHT-CET)</option>
                 <option value="DSE">Direct Second Year Engineering (Diploma)</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-heading mb-1.5">
-                {admissionType === 'CET' ? 'MHT-CET Percentile' : 'Diploma Overall Percentage'}
+                {admissionType === 'CET' ? 'MHT-CET Percentile' : (admissionType === 'DSE' ? 'Diploma Overall Percentage' : 'Score / Percentile')}
               </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 max="100"
-                required
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
                 className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-4 text-brand-heading placeholder:text-brand-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm"
@@ -155,6 +155,7 @@ export default function Profile({ onBack }) {
                 onChange={(e) => setCategory(e.target.value)}
                 className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-3.5 text-brand-heading focus:border-primary focus:outline-none text-sm"
               >
+                <option value="">Not Set</option>
                 <option value="OPEN">OPEN (General Merit)</option>
                 <option value="OBC">OBC (Other Backward Class)</option>
                 <option value="SC">SC (Scheduled Caste)</option>
@@ -180,6 +181,7 @@ export default function Profile({ onBack }) {
                 onChange={(e) => setGender(e.target.value)}
                 className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-3.5 text-brand-heading focus:border-primary focus:outline-none text-sm"
               >
+                <option value="">Not Set</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
@@ -193,6 +195,7 @@ export default function Profile({ onBack }) {
               onChange={(e) => setHomeUniversity(e.target.value)}
               className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-3.5 text-brand-heading focus:border-primary focus:outline-none text-sm"
             >
+              <option value="">Not Set</option>
               <option value="SPPU (Pune)">Savitribai Phule Pune University (SPPU)</option>
               <option value="MU (Mumbai)">Mumbai University (MU)</option>
               <option value="Shivaji (Sangli/Kolhapur)">Shivaji University (Sangli/Kolhapur)</option>
@@ -208,6 +211,7 @@ export default function Profile({ onBack }) {
               onChange={(e) => setBranchPreference(e.target.value)}
               className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-3.5 text-brand-heading focus:border-primary focus:outline-none text-sm"
             >
+              <option value="">Not Set</option>
               {branchesList.map(b => (
                 <option key={b.code} value={b.name}>{b.name}</option>
               ))}
