@@ -287,18 +287,144 @@ export const resolveCollegeUniversity = (college) => {
   return uni || 'Default University';
 };
 
-/**
- * Predicts admission chances for a student based on score, category, admission type, and branch.
- * @param {Object} studentProfile - { score, category, admissionType, branchPreference, homeUniversity, gender }
- * @param {Array} colleges - List of all colleges
- * @param {Array} cutoffs - List of all cutoffs
- * @returns {Object} { safe: [], moderate: [], dream: [], reach: [], allPredicted: [] }
- */
+const mapRegionField = (regionField) => {
+  if (!regionField) return null;
+  const clean = regionField.toLowerCase().trim();
+  if (clean === 'maharashtra') return null;
+  
+  if (clean.includes('pune') || clean.includes('west maharashtra')) return 'Pune';
+  if (clean.includes('mumbai')) return 'Mumbai';
+  if (clean.includes('nashik') || clean.includes('north maharashtra')) return 'Nashik';
+  if (clean.includes('nagpur')) return 'Nagpur';
+  if (clean.includes('amravati')) return 'Amravati';
+  if (clean.includes('aurangabad') || clean.includes('marathwada')) return 'Aurangabad';
+  if (clean.includes('konkan')) return 'Konkan';
+  return null;
+};
+
+const mapValueToRegion = (val) => {
+  if (!val) return null;
+  const cleanVal = val.toLowerCase().trim();
+  if (cleanVal.includes('pune') || cleanVal.includes('solapur') || cleanVal.includes('satara') || cleanVal.includes('sangli') || cleanVal.includes('kolhapur') || cleanVal.includes('karad')) {
+    return 'Pune';
+  }
+  if (cleanVal.includes('mumbai') || cleanVal.includes('thane') || cleanVal.includes('navi mumbai') || cleanVal.includes('raigad') || cleanVal.includes('palghar')) {
+    return 'Mumbai';
+  }
+  if (cleanVal.includes('nashik') || cleanVal.includes('ahmednagar') || cleanVal.includes('jalgaon') || cleanVal.includes('dhule') || cleanVal.includes('nandurbar')) {
+    return 'Nashik';
+  }
+  if (cleanVal.includes('nagpur') || cleanVal.includes('wardha') || cleanVal.includes('bhandara') || cleanVal.includes('gondia') || cleanVal.includes('gadchiroli') || cleanVal.includes('chandrapur')) {
+    return 'Nagpur';
+  }
+  if (cleanVal.includes('amravati') || cleanVal.includes('akola') || cleanVal.includes('yavatmal') || cleanVal.includes('buldhana') || cleanVal.includes('washim')) {
+    return 'Amravati';
+  }
+  if (cleanVal.includes('aurangabad') || cleanVal.includes('sambhajinagar') || cleanVal.includes('jalna') || cleanVal.includes('beed') || cleanVal.includes('osmanabad') || cleanVal.includes('nanded') || cleanVal.includes('latur') || cleanVal.includes('parbhani') || cleanVal.includes('hingoli')) {
+    return 'Aurangabad';
+  }
+  if (cleanVal.includes('ratnagiri') || cleanVal.includes('sindhudurg') || cleanVal.includes('ambav') || cleanVal.includes('deorukh')) {
+    return 'Konkan';
+  }
+  return null;
+};
+
+const determineRegionFromCode = (code, collegeName) => {
+  if (!code) return null;
+  const cleanCode = String(code).trim().replace(/^0+/, '');
+  if (!cleanCode) return null;
+  
+  const name = (collegeName || '').toLowerCase().trim();
+  
+  if (cleanCode.startsWith('6')) return 'Pune';
+  if (cleanCode.startsWith('3')) {
+    if (name.includes('bhonsale') || name.includes('deorukh') || name.includes('ratnagiri') || name.includes('sindhudurg') || name.includes('ambav')) {
+      return 'Konkan';
+    }
+    return 'Mumbai';
+  }
+  if (cleanCode.startsWith('5')) return 'Nashik';
+  if (cleanCode.startsWith('4')) return 'Nagpur';
+  if (cleanCode.startsWith('1')) {
+    if (name.includes('coep') || name.includes('pune')) {
+      return 'Pune';
+    }
+    return 'Amravati';
+  }
+  if (cleanCode.startsWith('2')) return 'Aurangabad';
+  
+  return null;
+};
+
+const determineRegionFromName = (collegeName) => {
+  if (!collegeName) return null;
+  const name = collegeName.toLowerCase().trim();
+  
+  const mapped = mapValueToRegion(name);
+  if (mapped) return mapped;
+  
+  if (name.includes('coep') || name.includes('isbm') || name.includes('navsahyadri') || name.includes('samarth') || name.includes('phaltan') || name.includes('ghodawat') || name.includes('sanjeevan') || name.includes('karmayogi')) {
+    return 'Pune';
+  }
+  if (name.includes('vjti') || name.includes('spit') || name.includes('somaiya') || name.includes('sanghvi') || name.includes('bhagubhai') || name.includes('vidyalankar') || name.includes('tsec') || name.includes('tasgaonkar') || name.includes('pravin') || name.includes('mahalaxmi')) {
+    return 'Mumbai';
+  }
+  if (name.includes('everest') || name.includes('patil college') || name.includes('mangaldeep') || name.includes('eknath') || name.includes('technical and management campus')) {
+    return 'Aurangabad';
+  }
+  return null;
+};
+
+export const determineCollegeRegion = (college) => {
+  if (!college) return null;
+  
+  // 1. college.region (if available)
+  const regionFromField = mapRegionField(college.region);
+  if (regionFromField) return regionFromField;
+  
+  // 2. college.district
+  const regionFromDistrict = mapValueToRegion(college.district);
+  if (regionFromDistrict) return regionFromDistrict;
+  
+  // 3. college.city
+  const regionFromCity = mapValueToRegion(college.city);
+  if (regionFromCity) return regionFromCity;
+  
+  // 4. DTE College Code Prefix
+  const regionFromCode = determineRegionFromCode(college.code || college.college_code, college.name || college.college_name);
+  if (regionFromCode) return regionFromCode;
+  
+  // 5. College Name keywords (fallback only)
+  const regionFromName = determineRegionFromName(college.name || college.college_name);
+  if (regionFromName) return regionFromName;
+  
+  return null;
+};
+
+export const collegeBelongsToRegions = (college, selectedRegions) => {
+  if (!selectedRegions || selectedRegions.length === 0 || selectedRegions.includes('Entire Maharashtra')) {
+    return true;
+  }
+  const determinedRegion = determineCollegeRegion(college);
+  if (!determinedRegion) return false;
+  return selectedRegions.includes(determinedRegion);
+};
+
 export const predictColleges = (studentProfile, colleges, cutoffs) => {
   console.time("predictorCalculations");
-  const { score, category, admissionType, branchPreference, homeUniversity, gender } = studentProfile;
+  const { score, category, admissionType, branchPreference, homeUniversity, gender, selectedRegions, specificCourse } = studentProfile;
   const numScore = parseFloat(score);
   const uiAdmissionType = normalizeAdmissionType(admissionType);
+
+  // Filter colleges by region before prediction logic or O(1) maps
+  const regionsToUse = selectedRegions || ['Entire Maharashtra'];
+  const filteredColleges = colleges.filter(col => collegeBelongsToRegions(col, regionsToUse));
+
+  console.log('[Predictor] Colleges count before/after region filter:', {
+    total: colleges.length,
+    filtered: filteredColleges.length,
+    regionsToUse
+  });
 
   const filterTrace = {
     rawRecords: cutoffs?.length || 0,
@@ -356,15 +482,20 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
   const afterBranch = afterCategory.filter(c => branchMatchesPreference(c.branch, branchPreference));
   filterTrace.afterBranch = afterBranch.length;
 
+  const finalBranchFilter = specificCourse
+    ? afterBranch.filter(c => c.branch && c.branch.trim().toLowerCase() === specificCourse.trim().toLowerCase())
+    : afterBranch;
+
   console.log('[Predictor] Stage counts:', {
     Raw: filterTrace.rawRecords,
     Admission: filterTrace.afterAdmission,
     Year: filterTrace.afterYear,
     Category: filterTrace.afterCategory,
-    Branch: filterTrace.afterBranch
+    Branch: filterTrace.afterBranch,
+    SpecificCourse: finalBranchFilter.length
   });
 
-  console.log('[Predictor] First 20 records before grouping:', afterBranch.slice(0, 20).map(r => ({
+  console.log('[Predictor] First 20 records before grouping:', finalBranchFilter.slice(0, 20).map(r => ({
     collegeCode: r.collegeCode || r.college_code,
     collegeName: r.collegeName,
     branch: r.branch,
@@ -372,12 +503,12 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
     admissionType: r.admissionType
   })));
 
-  const relevantCutoffs = afterBranch;
+  const relevantCutoffs = finalBranchFilter;
 
   // O(1) college lookup — avoid .find() returning wrong matches inside the loop
   const collegeById = new Map();
   const collegeByCode = new Map();
-  colleges.forEach(col => {
+  filteredColleges.forEach(col => {
     if (col.id != null) collegeById.set(Number(col.id), col);
     if (col.code != null && col.code !== '') collegeByCode.set(String(col.code), col);
   });
@@ -406,7 +537,7 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
   };
 
   // Sort relevantCutoffs so we process the latest round first (gives student the best eligibility chance)
-  const sortedCutoffs = [...afterBranch].sort((a, b) => parseRoundNumber(b.round) - parseRoundNumber(a.round));
+  const sortedCutoffs = [...finalBranchFilter].sort((a, b) => parseRoundNumber(b.round) - parseRoundNumber(a.round));
 
   const homeUniversityMatches = (collegeUniversity, studentUniversity) => {
     if (!collegeUniversity || !studentUniversity) return false;

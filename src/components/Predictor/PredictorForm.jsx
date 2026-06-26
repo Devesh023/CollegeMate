@@ -88,6 +88,10 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     return localStorage.getItem('cm_selectedBranchGroup') || 'Computer Group';
   });
 
+  const [specificCourse, setSpecificCourse] = useState(() => {
+    return localStorage.getItem('cm_specificCourse') || '';
+  });
+
   // Search filter for branches
   const [branchSearch, setBranchSearch] = useState('');
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
@@ -128,7 +132,18 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     localStorage.setItem('cm_feesPriority', feesPriority);
     localStorage.setItem('cm_selectedRegions', JSON.stringify(selectedRegions));
     localStorage.setItem('cm_selectedBranchGroup', selectedBranchGroup);
-  }, [admissionType, score, category, gender, homeUniversity, branchPreference, name, phone, tfws, ews, minority, capType, district, region, state, govToggle, pvtToggle, autonomous, naac, cityPreference, hostelRequired, placementPriority, feesPriority, selectedRegions, selectedBranchGroup]);
+    localStorage.setItem('cm_specificCourse', specificCourse);
+  }, [admissionType, score, category, gender, homeUniversity, branchPreference, name, phone, tfws, ews, minority, capType, district, region, state, govToggle, pvtToggle, autonomous, naac, cityPreference, hostelRequired, placementPriority, feesPriority, selectedRegions, selectedBranchGroup, specificCourse]);
+
+  // Reset specific course whenever selectedBranchGroup changes (after mount)
+  const prevBranchGroupRef = React.useRef(selectedBranchGroup);
+  useEffect(() => {
+    if (prevBranchGroupRef.current !== selectedBranchGroup) {
+      setSpecificCourse('');
+      localStorage.setItem('cm_specificCourse', '');
+      prevBranchGroupRef.current = selectedBranchGroup;
+    }
+  }, [selectedBranchGroup]);
 
   // Sync selectedRegions to homeUniversity and region
   useEffect(() => {
@@ -267,7 +282,9 @@ export default function PredictorForm({ onPredict, branches = [] }) {
       homeUniversity,
       branchPreference,
       name,
-      phone
+      phone,
+      selectedRegions,
+      specificCourse
     });
   };
 
@@ -299,6 +316,7 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     setBranchSearch('');
     setSelectedRegions(['Entire Maharashtra']);
     setSelectedBranchGroup('Computer Group');
+    setSpecificCourse('');
     setCurrentStep(0);
     setShowValidation(false);
     onPredict(null);
@@ -309,6 +327,13 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     if (!branchSearch) return branches;
     return branches.filter(b => b.name?.toLowerCase()?.includes(branchSearch.toLowerCase()));
   }, [branchSearch, branches]);
+
+  // Sorted unique branch names for Specific Course dropdown
+  const sortedUniqueBranches = useMemo(() => {
+    if (!branches) return [];
+    const uniqueNames = Array.from(new Set(branches.map(b => b.name).filter(Boolean)));
+    return uniqueNames.sort((a, b) => a.localeCompare(b));
+  }, [branches]);
 
   const stepTitles = [
     { title: 'Pathway Select', sub: 'MHT-CET or Diploma' },
@@ -832,6 +857,29 @@ export default function PredictorForm({ onPredict, branches = [] }) {
                             </button>
                           );
                         })}
+                      </div>
+
+                      {/* Specific Course Dropdown */}
+                      <div className="pt-4 border-t border-brand-border/60 space-y-2">
+                        <label htmlFor="specific-course-select" className="block text-xs font-bold text-brand-heading">
+                          Specific Course (Optional)
+                        </label>
+                        <div className="relative group">
+                          <GraduationCap className="absolute left-3 top-3.5 h-4.5 w-4.5 text-brand-muted group-focus-within:text-primary transition-colors" />
+                          <select
+                            id="specific-course-select"
+                            value={specificCourse}
+                            onChange={(e) => setSpecificCourse(e.target.value)}
+                            className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg pl-10 pr-2.5 text-brand-heading focus:border-primary focus:outline-none text-sm cursor-pointer"
+                          >
+                            <option value="">All Branches in {selectedBranchGroup}</option>
+                            {sortedUniqueBranches.map((name) => (
+                              <option key={name} value={name}>
+                                {name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   )}

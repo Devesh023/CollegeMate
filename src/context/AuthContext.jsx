@@ -22,6 +22,42 @@ export const AuthProvider = ({ children }) => {
     };
   };
 
+  const ensureUserProfile = async (session) => {
+    if (!session || !supabase) return null;
+    try {
+      const profiles = await dbService.getProfiles();
+      let userProfile = profiles.find(p => p.id === session.user.id);
+      if (!userProfile) {
+        const defaultProfile = {
+          id: session.user.id,
+          full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+          admission_type: 'CET',
+          score: 0,
+          category: 'OPEN',
+          gender: 'Male'
+        };
+        const { data: newProfile, error } = await supabase
+          .from('profiles')
+          .insert([defaultProfile])
+          .select();
+        if (error) {
+          console.error("Error inserting default profile:", error);
+        }
+        if (newProfile && newProfile.length > 0) {
+          userProfile = newProfile[0];
+        } else {
+          // fetch again as a fallback
+          const secondProfiles = await dbService.getProfiles();
+          userProfile = secondProfiles.find(p => p.id === session.user.id);
+        }
+      }
+      return userProfile;
+    } catch (e) {
+      console.error("Failed to ensure user profile:", e);
+      return null;
+    }
+  };
+
   // Initialize Auth state
   useEffect(() => {
     const initializeAuth = async () => {
@@ -51,9 +87,7 @@ export const AuthProvider = ({ children }) => {
           // Supabase session management
           const { data: { session } } = await supabase.auth.getSession();
           if (session && !adminAuthenticated) {
-            // Fetch profile
-            const profiles = await dbService.getProfiles();
-            const userProfile = profiles.find(p => p.id === session.user.id);
+            const userProfile = await ensureUserProfile(session);
             const savedColleges = await dbService.getSavedCollegeIds(session.user.id);
             setUser({
               id: session.user.id,
@@ -71,8 +105,7 @@ export const AuthProvider = ({ children }) => {
               localStorage.removeItem('adminEmail');
               localStorage.removeItem('adminRole');
               
-              const profiles = await dbService.getProfiles();
-              const userProfile = profiles.find(p => p.id === session.user.id);
+              const userProfile = await ensureUserProfile(session);
               const savedColleges = await dbService.getSavedCollegeIds(session.user.id);
               setUser({
                 id: session.user.id,
@@ -238,13 +271,7 @@ export const AuthProvider = ({ children }) => {
           const { error: profileErr } = await supabase
             .from('profiles')
             .update({
-              full_name: profileData.name,
-              admission_type: profileData.admissionType || 'CET',
-              score: parseFloat(profileData.score) || 0,
-              category: profileData.category || 'OPEN',
-              gender: profileData.gender || 'Male',
-              home_university: profileData.homeUniversity || '',
-              branch_preference: profileData.branchPreference || ''
+              full_name: profileData.name
             })
             .eq('id', data.user.id);
           if (profileErr) throw profileErr;
@@ -264,12 +291,12 @@ export const AuthProvider = ({ children }) => {
           role: 'student',
           profile: {
             name: profileData.name,
-            admissionType: profileData.admissionType || 'CET',
-            score: parseFloat(profileData.score) || 0,
-            category: profileData.category || 'OPEN',
-            gender: profileData.gender || 'Male',
-            homeUniversity: profileData.homeUniversity || '',
-            branchPreference: profileData.branchPreference || 'Computer Engineering',
+            admissionType: 'CET',
+            score: 0,
+            category: 'OPEN',
+            gender: 'Male',
+            homeUniversity: 'SPPU (Pune)',
+            branchPreference: 'Computer Engineering',
             savedColleges: []
           }
         };
@@ -289,6 +316,45 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       setAuthError(err.message || 'Signup failed');
+      throw err;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    setAuthError(null);
+    try {
+      if (supabase) {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/dashboard`
+          }
+        });
+        if (error) throw error;
+        return true;
+      } else {
+        // Mock Google login
+        const sessionUser = {
+          id: 'google-mock-id',
+          email: 'googleuser@gmail.com',
+          role: 'student',
+          profile: {
+            name: 'Google User',
+            admissionType: 'CET',
+            score: 0,
+            category: 'OPEN',
+            gender: 'Male',
+            homeUniversity: 'SPPU (Pune)',
+            branchPreference: 'Computer Engineering',
+            savedColleges: []
+          }
+        };
+        localStorage.setItem('collegemate_logged_in', JSON.stringify(sessionUser));
+        setUser(sessionUser);
+        return true;
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Google login failed');
       throw err;
     }
   };
@@ -377,6 +443,7 @@ export const AuthProvider = ({ children }) => {
     login,
     adminLogin,
     signup,
+    loginWithGoogle,
     logout,
     updateProfile,
     toggleSavedCollege

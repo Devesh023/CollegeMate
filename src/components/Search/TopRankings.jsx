@@ -104,6 +104,39 @@ const RANKED_CODES = [
   "05121", "06141", "06207", "03197", "06187"
 ];
 
+const RANKED_METADATA = {
+  "16006": { established: 1854, naac: "A+", avgPkg: 11.5, maxPkg: 40.0, placement: 92, type: "Government Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "03036": { established: 1933, naac: "A++", avgPkg: 10.5, maxPkg: 38.0, placement: 90, type: "Government-Aided Autonomous", branches: "Chemical Engineering, Polymer Engineering, Food Technology, Surface Coating Technology, Dyestuff Technology", university: "Mumbai University (MU)" },
+  "03012": { established: 1887, naac: "A+", avgPkg: 12.0, maxPkg: 44.0, placement: 95, type: "Government-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Mumbai University (MU)" },
+  "06007": { established: 1947, naac: "A", avgPkg: 8.5, maxPkg: 35.0, placement: 89, type: "Government-Aided Autonomous", branches: "Computer Science & Engineering, Information Technology, Electronics Engineering, Mechanical Engineering, Civil Engineering", university: "Shivaji University (SU)" },
+  "03014": { established: 1962, naac: "A", avgPkg: 9.0, maxPkg: 36.0, placement: 88, type: "Government-Aided Autonomous", branches: "Civil Engineering, Mechanical Engineering, Electrical Engineering", university: "Mumbai University (MU)" },
+  "06271": { established: 1983, naac: "A+", avgPkg: 9.8, maxPkg: 41.0, placement: 96, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication", university: "Savitribai Phule Pune University (SPPU)" },
+  "03215": { established: 2005, naac: "A+", avgPkg: 10.2, maxPkg: 42.0, placement: 94, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Computer Science & Engineering (Data Science), Artificial Intelligence & Machine Learning", university: "Mumbai University (MU)" },
+  "06273": { established: 1983, naac: "A++", avgPkg: 7.2, maxPkg: 28.0, placement: 88, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Chemical Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "03199": { established: 1994, naac: "A", avgPkg: 8.5, maxPkg: 32.0, placement: 92, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Chemical Engineering", university: "Mumbai University (MU)" },
+  "03209": { established: 2001, naac: "A", avgPkg: 6.8, maxPkg: 25.0, placement: 85, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Artificial Intelligence & Data Science", university: "Mumbai University (MU)" },
+  "06276": { established: 1991, naac: "A", avgPkg: 8.8, maxPkg: 32.0, placement: 93, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "06175": { established: 1999, naac: "A", avgPkg: 6.5, maxPkg: 26.0, placement: 91, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "03182": { established: 1977, naac: "A", avgPkg: 8.0, maxPkg: 28.0, placement: 87, type: "Un-Aided Private", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Chemical Engineering, Biomedical Engineering", university: "Mumbai University (MU)" },
+  "06289": { established: 2002, naac: "A", avgPkg: 6.5, maxPkg: 27.0, placement: 86, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "06146": { established: 1999, naac: "A", avgPkg: 6.0, maxPkg: 22.0, placement: 84, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "02008": { established: 1960, naac: "A", avgPkg: 6.2, maxPkg: 18.0, placement: 80, type: "Government Autonomous", branches: "Computer Science & Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Dr. Babasaheb Ambedkar Marathwada University" },
+  "01002": { established: 1964, naac: "A", avgPkg: 5.5, maxPkg: 15.0, placement: 78, type: "Government Autonomous", branches: "Computer Science & Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Sant Gadge Baba Amravati University" },
+  "06005": { established: 1960, naac: "A", avgPkg: 6.0, maxPkg: 16.0, placement: 84, type: "Government Autonomous", branches: "Computer Science & Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Shivaji University (SU)" },
+  "05004": { established: 1996, naac: "B+", avgPkg: 5.0, maxPkg: 12.0, placement: 78, type: "Government Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Kavayitri Bahinabai Chaudhari North Maharashtra University" },
+  "04025": { established: 2016, naac: "A", avgPkg: 5.2, maxPkg: 14.0, placement: 75, type: "Government", branches: "Computer Science & Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Rashtrasant Tukadoji Maharaj Nagpur University" },
+  "02020": { established: 1981, naac: "A", avgPkg: 6.5, maxPkg: 20.0, placement: 82, type: "Government-Aided Autonomous", branches: "Computer Science & Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Chemical Engineering", university: "Swami Ramanand Teerth Marathwada University" },
+  "04004": { established: 1996, naac: "B+", avgPkg: 4.8, maxPkg: 12.0, placement: 72, type: "Government", branches: "Computer Science & Engineering, Instrumentation Engineering, Mechanical Engineering, Civil Engineering", university: "Gondwana University" },
+  "04115": { established: 1984, naac: "A+", avgPkg: 7.2, maxPkg: 25.0, placement: 90, type: "Un-Aided Autonomous", branches: "Computer Science & Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Rashtrasant Tukadoji Maharaj Nagpur University" },
+  "04167": { established: 1984, naac: "A", avgPkg: 5.5, maxPkg: 16.0, placement: 82, type: "Un-Aided Autonomous", branches: "Computer Technology, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Rashtrasant Tukadoji Maharaj Nagpur University" },
+  "03139": { established: 1999, naac: "A", avgPkg: 5.2, maxPkg: 18.0, placement: 80, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Biomedical Engineering", university: "Mumbai University (MU)" },
+  "05121": { established: 1984, naac: "A", avgPkg: 5.2, maxPkg: 18.0, placement: 82, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "06141": { established: 2001, naac: "A", avgPkg: 5.5, maxPkg: 18.0, placement: 86, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "06207": { established: 1998, naac: "A", avgPkg: 5.8, maxPkg: 20.0, placement: 85, type: "Un-Aided Private", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" },
+  "03197": { established: 1994, naac: "A", avgPkg: 6.2, maxPkg: 22.0, placement: 86, type: "Un-Aided Autonomous", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Electrical Engineering", university: "Mumbai University (MU)" },
+  "06187": { established: 2005, naac: "B++", avgPkg: 4.8, maxPkg: 14.0, placement: 80, type: "Un-Aided Private", branches: "Computer Engineering, Information Technology, Electronics & Telecommunication, Mechanical Engineering, Civil Engineering", university: "Savitribai Phule Pune University (SPPU)" }
+};
+
 // Image Fallback Component
 function ImageWithFallback({ code, alt, className }) {
   const [currentSource, setCurrentSource] = useState('local'); // local, official, wiki, generic
@@ -177,7 +210,10 @@ export default function TopRankings({ onViewCollege, onBack, setCompareColleges,
         const results = await Promise.all(promises);
 
         const mapped = RANKED_CODES.map((code, index) => {
-          const col = results.find(c => c && c.code === code);
+          // Normalize code for comparison to handle zero-prefix mismatches
+          const normCode = String(code).trim().replace(/^0+/, '');
+          const col = results.find(c => c && String(c.code).trim().replace(/^0+/, '') === normCode);
+          
           let parsedDesc = {};
           if (col && col.description) {
             try {
@@ -187,20 +223,22 @@ export default function TopRankings({ onViewCollege, onBack, setCompareColleges,
             }
           }
 
+          const meta = RANKED_METADATA[code] || {};
+
           return {
             rank: index + 1,
             code: code,
-            name: col ? col.name : `College Code ${code}`,
-            city: col ? col.city : "Maharashtra",
-            type: col && col.type ? col.type : "Information currently unavailable.",
-            naac: parsedDesc.naac_grade || "Information currently unavailable.",
-            established: parsedDesc.established_year || "Information currently unavailable.",
-            averagePackage: col ? col.averagePackage : null,
-            highestPackage: parsedDesc.highest_package || (col ? col.highestPackage : null),
-            placementPercentage: col ? col.placementPercentage : null,
-            branches: col && col.courses && col.courses.length > 0 ? col.courses.slice(0, 5).join(', ') : "Information currently unavailable.",
-            website: col ? col.website : null,
-            university: col && col.university ? col.university : (parsedDesc.university || null),
+            name: col && col.name ? col.name : `College Code ${code}`,
+            city: col && col.city ? col.city : (meta.city || "Maharashtra"),
+            type: col && col.type && col.type !== "Information currently unavailable." ? col.type : (meta.type || "Not Available"),
+            naac: parsedDesc.naac_grade || col?.naac || meta.naac || "Not Available",
+            established: parsedDesc.established_year || col?.established || meta.established || "Not Available",
+            averagePackage: col && col.averagePackage ? col.averagePackage : (meta.avgPkg || null),
+            highestPackage: parsedDesc.highest_package || (col && col.highestPackage ? col.highestPackage : (meta.maxPkg || null)),
+            placementPercentage: col && col.placementPercentage ? col.placementPercentage : (meta.placement || null),
+            branches: col && col.courses && col.courses.length > 0 ? col.courses.slice(0, 5).join(', ') : (meta.branches || "Not Available"),
+            website: col && col.website ? col.website : (meta.website || null),
+            university: col && col.university && col.university !== 'Default University' ? col.university : (parsedDesc.university || meta.university || null),
             rawCollege: col,
             metadata: parsedDesc
           };

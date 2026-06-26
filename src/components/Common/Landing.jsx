@@ -75,6 +75,86 @@ export default function Landing({ setActiveTab }) {
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
+          <p className="mt-3 text-xs font-semibold text-brand-muted flex items-center justify-center gap-1.5">
+            <span>🎁 First 2 Predictions are FREE</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-border/60"></span>
+            <span>No login required</span>
+          </p>
+        </div>
+
+        {/* Freemium Section */}
+        <div className="my-10 max-w-4xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-brand-card p-8 sm:p-10 shadow-lg text-center space-y-6">
+            {/* Background glowing spot */}
+            <div className="absolute -top-12 -left-12 h-40 w-40 rounded-full bg-primary/5 blur-2xl pointer-events-none"></div>
+            <div className="absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-secondary/5 blur-2xl pointer-events-none"></div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-brand-heading">
+                Try CollegeMate Free
+              </h2>
+              <p className="text-sm text-brand-muted max-w-md mx-auto">
+                Start predicting your dream engineering college in minutes.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto text-left pt-2">
+              {/* Free Trial Benefits */}
+              <div className="space-y-4 rounded-2xl bg-brand-bg/40 p-5 border border-brand-border/40">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">Free Benefits</span>
+                <ul className="space-y-2.5 text-sm text-brand-body">
+                  <li className="flex items-center space-x-2">
+                    <span className="text-emerald-500 font-bold shrink-0">✅</span>
+                    <span>2 Free College Predictions</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="text-emerald-500 font-bold shrink-0">✅</span>
+                    <span>No Login Required</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Registered Benefits */}
+              <div className="space-y-4 rounded-2xl bg-brand-bg/40 p-5 border border-brand-border/40">
+                <span className="text-xs font-bold uppercase tracking-wider text-secondary">Unlocked After Login</span>
+                <ul className="space-y-2.5 text-sm text-brand-body">
+                  <li className="flex items-center space-x-2">
+                    <span className="shrink-0 text-sm">🔓</span>
+                    <span>Unlimited Predictions</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="shrink-0 text-sm">💾</span>
+                    <span>Save Favourite Colleges</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="shrink-0 text-sm">📊</span>
+                    <span>Compare Colleges</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="shrink-0 text-sm">⭐</span>
+                    <span>Personalized Dashboard</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="shrink-0 text-sm">🤖</span>
+                    <span>Future AI Features</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="pt-4 space-y-2">
+              <button
+                onClick={() => setActiveTab('predictor')}
+                className="inline-flex h-12 items-center justify-center space-x-2 rounded-xl bg-gradient-to-r from-primary to-indigo-600 px-10 text-sm font-semibold text-white shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer"
+              >
+                <span>Start Free</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <p className="text-[10px] font-medium text-brand-muted">
+                No Credit Card Required
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* 2. STATS BANNER */}

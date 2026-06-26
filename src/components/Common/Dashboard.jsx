@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import logoImg from '../../assets/logocm.png';
 import { dbService } from '../../services/dbService';
 import { predictColleges } from '../../services/predictor';
 import { 
@@ -125,7 +126,7 @@ export default function Dashboard({ setActiveTab, setCompareColleges }) {
       {/* 1. WELCOME HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 pb-6 border-b border-brand-border">
         <div className="flex items-center space-x-3.5">
-          <img src="/src/assets/logocm.png" alt="CollegeMate Logo" className="h-12 w-auto object-contain shrink-0" />
+          <img src={logoImg} alt="CollegeMate Logo" className="h-12 w-auto object-contain shrink-0" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-brand-heading">
               Welcome back, {user?.profile?.name || 'Student'}!

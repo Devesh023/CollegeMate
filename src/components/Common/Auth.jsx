@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import logoImg from '../../assets/logocm.png';
 import { LogIn, UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
 import { CITIES, UNIVERSITIES, BRANCHES as MOCK_BRANCHES } from '../../db/mockData';
 import { dbService } from '../../services/dbService';
 
 export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
-  const { login, signup, authError } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const { login, signup, authError, loginWithGoogle } = useAuth();
+  const [isLogin, setIsLogin] = useState(() => {
+    return localStorage.getItem('cm_auth_tab') !== 'signup';
+  });
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const [branchesList, setBranchesList] = useState(MOCK_BRANCHES);
 
   // Sign In Form States
   const [signInEmail, setSignInEmail] = useState('');
@@ -19,26 +21,13 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
   const [signUpName, setSignUpName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
-  const [admissionType, setAdmissionType] = useState('CET');
-  const [score, setScore] = useState('');
-  const [category, setCategory] = useState('OPEN');
-  const [gender, setGender] = useState('Male');
-  const [homeUniversity, setHomeUniversity] = useState('SPPU (Pune)');
-  const [branchPreference, setBranchPreference] = useState('Computer Engineering');
 
-  useEffect(() => {
-    const loadBranches = async () => {
-      try {
-        const list = await dbService.getBranches();
-        if (list && list.length > 0) {
-          setBranchesList(list);
-        }
-      } catch (err) {
-        console.error('Failed to load branches from DB', err);
-      }
-    };
-    loadBranches();
-  }, []);
+  const redirectAfterAuth = () => {
+    const target = localStorage.getItem('cm_auth_redirect') || 'dashboard';
+    localStorage.removeItem('cm_auth_redirect');
+    localStorage.removeItem('cm_auth_tab');
+    if (onAuthSuccess) onAuthSuccess(target);
+  };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -46,7 +35,7 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
     setLoading(true);
     try {
       await login(signInEmail, signInPassword);
-      if (onAuthSuccess) onAuthSuccess('dashboard');
+      redirectAfterAuth();
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,25 +45,60 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (!signUpEmail || !signUpPassword || !signUpName || !score) return;
+    if (!signUpEmail || !signUpPassword || !signUpName) return;
     setLoading(true);
     try {
       const profileData = {
-        name: signUpName,
-        admissionType,
-        score: parseFloat(score),
-        category,
-        gender,
-        homeUniversity,
-        branchPreference
+        name: signUpName
       };
       await signup(signUpEmail, signUpPassword, profileData);
       setSuccessMsg('Account created successfully!');
       setTimeout(() => {
-        if (onAuthSuccess) onAuthSuccess('dashboard');
+        redirectAfterAuth();
       }, 1000);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      // Google redirect will occur here for real Supabase. For mock local db:
+      const loggedIn = localStorage.getItem('collegemate_logged_in');
+      if (loggedIn) {
+        redirectAfterAuth();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!signInEmail) {
+      alert("Please enter your email address first.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { supabase } = await import('../../services/dbService');
+      if (supabase) {
+        const { error } = await supabase.auth.resetPasswordForEmail(signInEmail, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        alert("Password reset email sent!");
+      } else {
+        alert("Mock password reset link sent to " + signInEmail);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -85,7 +109,7 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
       
       {/* Brand Logo and Title */}
       <div className="flex flex-col items-center justify-center mb-6">
-        <img src="/src/assets/logocm.png" alt="CollegeMate Logo" className="h-16 w-auto object-contain mb-2" />
+        <img src={logoImg} alt="CollegeMate Logo" className="h-16 w-auto object-contain mb-2" />
         <h2 className="text-xl font-bold text-brand-heading">
           College<span className="text-primary">Mate</span>
         </h2>
@@ -158,7 +182,16 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-brand-heading mb-1.5">Password</label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-sm font-medium text-brand-heading">Password</label>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-xs font-semibold text-primary hover:text-primary-hover focus:outline-none cursor-pointer"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
                 <input
                   type="password"
                   required
@@ -172,10 +205,45 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex h-12 w-full items-center justify-center space-x-2 rounded-xl bg-primary px-4 py-2 font-medium text-white shadow-sm hover:bg-primary-hover focus:outline-none disabled:opacity-50 transition-colors"
+                className="flex h-12 w-full items-center justify-center space-x-2 rounded-xl bg-primary px-4 py-2 font-medium text-white shadow-sm hover:bg-primary-hover focus:outline-none disabled:opacity-50 transition-colors cursor-pointer"
               >
                 <LogIn className="h-5 w-5" />
                 <span>{loading ? 'Signing In...' : 'Sign In'}</span>
+              </button>
+
+              {/* Divider */}
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-brand-border"></div>
+                <span className="flex-shrink mx-4 text-brand-muted text-xs">Or</span>
+                <div className="flex-grow border-t border-brand-border"></div>
+              </div>
+
+              {/* Continue with Google */}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="flex h-12 w-full items-center justify-center space-x-2.5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/40 font-medium text-brand-heading shadow-sm focus:outline-none disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.72 14.9.96 12 .96 7.37.96 3.4 3.63 1.5 7.51l3.79 2.94c.89-2.67 3.39-4.41 6.71-4.41z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.46h6.44c-.28 1.47-1.11 2.72-2.35 3.56l3.64 2.82c2.13-1.97 3.76-4.87 3.76-8.49z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.29 14.55c-.23-.68-.36-1.41-.36-2.16s.13-1.48.36-2.16L1.5 7.29C.68 8.93.21 10.77.21 12.71c0 1.94.47 3.78 1.29 5.42l3.79-2.94-.08-.64z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23.04c3.24 0 5.97-1.07 7.96-2.91l-3.64-2.82c-1.1.74-2.5 1.18-4.32 1.18-3.32 0-6.14-2.18-7.14-5.14L1.07 16.2c1.9 3.88 5.87 6.55 10.93 6.55z"
+                  />
+                </svg>
+                <span>Continue with Google</span>
               </button>
             </form>
           ) : (
@@ -217,111 +285,48 @@ export default function Auth({ onAuthSuccess, authWarning, setAuthWarning }) {
                 />
               </div>
 
-              {/* ACADEMICS */}
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-brand-border">
-                <div>
-                  <label className="block text-xs font-semibold text-brand-body mb-1">Admission Type</label>
-                  <select
-                    value={admissionType}
-                    onChange={(e) => setAdmissionType(e.target.value)}
-                    className="block h-10 w-full rounded-xl border border-brand-border bg-brand-bg px-2.5 text-brand-heading focus:border-primary focus:outline-none text-xs"
-                  >
-                    <option value="CET">1st Year (MHT-CET)</option>
-                    <option value="DSE">Direct 2nd Yr (Diploma)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-brand-body mb-1">
-                    {admissionType === 'CET' ? 'CET Percentile' : 'Diploma %'}
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    required
-                    placeholder="96.50"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    className="block h-10 w-full rounded-xl border border-brand-border bg-brand-bg px-3 text-brand-heading placeholder:text-brand-muted focus:border-primary focus:outline-none text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-brand-body mb-1">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="block h-10 w-full rounded-xl border border-brand-border bg-brand-bg px-2.5 text-brand-heading focus:border-primary focus:outline-none text-xs"
-                  >
-                    <option value="OPEN">OPEN (General)</option>
-                    <option value="OBC">OBC</option>
-                    <option value="SC">SC</option>
-                    <option value="ST">ST</option>
-                    <option value="VJ">VJ (DT-A)</option>
-                    <option value="NT-A">NT-A (NT1)</option>
-                    <option value="NT-B">NT-B (NT2)</option>
-                    <option value="NT-C">NT-C (NT3)</option>
-                    <option value="NT-D">NT-D (NT4)</option>
-                    <option value="SBC">SBC</option>
-                    <option value="SEBC">SEBC</option>
-                    <option value="EWS">EWS</option>
-                    <option value="TFWS">TFWS</option>
-                    <option value="PWD">PWD</option>
-                    <option value="DEFENCE">DEFENCE</option>
-                    <option value="ORPHAN">ORPHAN</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-brand-body mb-1">Gender</label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="block h-10 w-full rounded-xl border border-brand-border bg-brand-bg px-2.5 text-brand-heading focus:border-primary focus:outline-none text-xs"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-brand-body mb-1">Home University Region</label>
-                <select
-                  value={homeUniversity}
-                  onChange={(e) => setHomeUniversity(e.target.value)}
-                  className="block h-10 w-full rounded-xl border border-brand-border bg-brand-bg px-2.5 text-brand-heading focus:border-primary focus:outline-none text-xs"
-                >
-                  <option value="SPPU (Pune)">SPPU (Pune Region)</option>
-                  <option value="MU (Mumbai)">MU (Mumbai Region)</option>
-                  <option value="Shivaji (Sangli/Kolhapur)">Shivaji University</option>
-                  <option value="DBATU (Statewide)">DBATU (Autonomous/Other)</option>
-                  <option value="RTMNU (Nagpur)">RTMNU (Nagpur Region)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-brand-body mb-1">Branch Preference</label>
-                <select
-                  value={branchPreference}
-                  onChange={(e) => setBranchPreference(e.target.value)}
-                  className="block h-10 w-full rounded-xl border border-brand-border bg-brand-bg px-2.5 text-brand-heading focus:border-primary focus:outline-none text-xs"
-                >
-                  {branchesList.map(b => (
-                    <option key={b.code} value={b.name}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-
               <button
                 type="submit"
                 disabled={loading}
-                className="flex h-11 w-full items-center justify-center space-x-2 rounded-xl bg-primary px-4 py-2 font-medium text-white shadow-sm hover:bg-primary-hover focus:outline-none disabled:opacity-50 transition-colors pt-2.5"
+                className="flex h-11 w-full items-center justify-center space-x-2 rounded-xl bg-primary px-4 py-2 font-medium text-white shadow-sm hover:bg-primary-hover focus:outline-none disabled:opacity-50 transition-colors pt-2.5 cursor-pointer"
               >
                 <UserPlus className="h-5 w-5" />
                 <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+              </button>
+
+              {/* Divider */}
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-brand-border"></div>
+                <span className="flex-shrink mx-4 text-brand-muted text-xs">Or</span>
+                <div className="flex-grow border-t border-brand-border"></div>
+              </div>
+
+              {/* Continue with Google */}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="flex h-12 w-full items-center justify-center space-x-2.5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/40 font-medium text-brand-heading shadow-sm focus:outline-none disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.04c1.62 0 3.08.56 4.22 1.64l3.15-3.15C17.45 1.72 14.9.96 12 .96 7.37.96 3.4 3.63 1.5 7.51l3.79 2.94c.89-2.67 3.39-4.41 6.71-4.41z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.46h6.44c-.28 1.47-1.11 2.72-2.35 3.56l3.64 2.82c2.13-1.97 3.76-4.87 3.76-8.49z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.29 14.55c-.23-.68-.36-1.41-.36-2.16s.13-1.48.36-2.16L1.5 7.29C.68 8.93.21 10.77.21 12.71c0 1.94.47 3.78 1.29 5.42l3.79-2.94-.08-.64z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23.04c3.24 0 5.97-1.07 7.96-2.91l-3.64-2.82c-1.1.74-2.5 1.18-4.32 1.18-3.32 0-6.14-2.18-7.14-5.14L1.07 16.2c1.9 3.88 5.87 6.55 10.93 6.55z"
+                  />
+                </svg>
+                <span>Continue with Google</span>
               </button>
             </form>
           )}

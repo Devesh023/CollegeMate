@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dbService } from '../../services/dbService';
+import logoImg from '../../assets/logocm.png';
 import { parsePdfClient } from '../../services/pdfParser';
 import { parseCSV, detectColumns, validateCSVRow } from '../../services/csvParser';
 import { BRANCHES, CITIES, UNIVERSITIES } from '../../db/mockData';
@@ -991,7 +992,7 @@ export default function AdminPanel({ onBack }) {
       {/* HEADER */}
       <div className="mb-6 pb-4 border-b border-brand-border flex items-center justify-between">
         <div className="flex items-center space-x-3.5">
-          <img src="/src/assets/logocm.png" alt="CollegeMate Logo" className="h-12 w-auto object-contain shrink-0" />
+          <img src={logoImg} alt="CollegeMate Logo" className="h-12 w-auto object-contain shrink-0" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-brand-heading">
               Admin Control Panel

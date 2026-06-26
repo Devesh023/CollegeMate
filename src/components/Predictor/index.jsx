@@ -3,7 +3,8 @@ import PredictorForm from './PredictorForm';
 import PredictorResults from './PredictorResults';
 import { dbService } from '../../services/dbService';
 import { predictColleges } from '../../services/predictor';
-import { Sparkles, Info, ArrowLeft, Loader } from 'lucide-react';
+import { Sparkles, Info, ArrowLeft, Loader, Lock, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -55,7 +56,34 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function CollegePredictorContent({ onBack }) {
+function CollegePredictorContent({ onBack, setActiveTab }) {
+  const { user } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const renderTrialBadge = () => {
+    if (user) return null;
+    const count = parseInt(localStorage.getItem('cm_prediction_count') || '0', 10);
+    let remainingText = '';
+    let badgeColor = '';
+    if (count === 0) {
+      remainingText = 'Predictions Remaining: 2';
+      badgeColor = 'bg-primary/10 border-primary/20 text-primary';
+    } else if (count === 1) {
+      remainingText = 'Predictions Remaining: 1';
+      badgeColor = 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-500';
+    } else {
+      remainingText = 'Free Trial Completed';
+      badgeColor = 'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-500';
+    }
+
+    return (
+      <div className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl border text-xs font-bold ${badgeColor} shadow-sm transition-all duration-200`}>
+        <span>🎁 Free Trial</span>
+        <span className="h-1.5 w-1.5 rounded-full bg-current/40"></span>
+        <span>{remainingText}</span>
+      </div>
+    );
+  };
   const [colleges, setColleges] = useState([]);
   const [branches, setBranches] = useState([]);
   const [predictions, setPredictions] = useState(null);
@@ -119,12 +147,40 @@ function CollegePredictorContent({ onBack }) {
     loadData();
   }, []);
 
+  // Auto-predict after redirecting from authentication
+  useEffect(() => {
+    if (user && colleges.length > 0) {
+      const pending = localStorage.getItem('cm_pending_prediction');
+      if (pending) {
+        localStorage.removeItem('cm_pending_prediction');
+        localStorage.removeItem('cm_auth_redirect');
+        try {
+          const profile = JSON.parse(pending);
+          handlePredict(profile);
+        } catch (e) {
+          console.error("Failed to parse pending prediction:", e);
+        }
+      }
+    }
+  }, [user, colleges]);
+
   const handlePredict = async (profile) => {
     if (!profile) {
       setPredictions(null);
       setCurrentProfile(null);
       setPredictionError(null);
       return;
+    }
+
+    // Check prediction limit for guest users
+    if (!user) {
+      const count = parseInt(localStorage.getItem('cm_prediction_count') || '0', 10);
+      if (count >= 2) {
+        setShowLoginModal(true);
+        localStorage.setItem('cm_pending_prediction', JSON.stringify(profile));
+        localStorage.setItem('cm_auth_redirect', 'predictor');
+        return;
+      }
     }
     
     setPredicting(true);
@@ -149,6 +205,12 @@ function CollegePredictorContent({ onBack }) {
       
       const results = predictColleges(profile, colleges, currentCutoffs);
       setPredictions(results);
+
+      // Increment count on successful prediction for guests
+      if (!user) {
+        const count = parseInt(localStorage.getItem('cm_prediction_count') || '0', 10);
+        localStorage.setItem('cm_prediction_count', (count + 1).toString());
+      }
     } catch (err) {
       console.error("Prediction error:", err);
       setPredictionError(err.message || String(err));
@@ -172,7 +234,7 @@ function CollegePredictorContent({ onBack }) {
       )}
 
       {/* HEADER Banner */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-brand-border pb-6">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 border-b border-brand-border pb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-brand-heading">
             CAP Round Predictor
@@ -183,15 +245,18 @@ function CollegePredictorContent({ onBack }) {
               : "Enter your academic details below to predict college admission chances."}
           </p>
         </div>
-        {predictions && !predicting && (
-          <button
-            onClick={() => handlePredict(null)}
-            className="mt-4 sm:mt-0 px-4 py-2 border border-brand-border bg-brand-card text-xs font-bold rounded-xl text-brand-heading hover:bg-brand-bg transition-colors flex items-center space-x-2 shadow-sm cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Modify Details</span>
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {renderTrialBadge()}
+          {predictions && !predicting && (
+            <button
+              onClick={() => handlePredict(null)}
+              className="px-4 py-2 border border-brand-border bg-brand-card text-xs font-bold rounded-xl text-brand-heading hover:bg-brand-bg transition-colors flex items-center space-x-2 shadow-sm cursor-pointer"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Modify Details</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ERROR OR LOADING NOTIFICATIONS */}
@@ -288,6 +353,63 @@ function CollegePredictorContent({ onBack }) {
           />
         ) : (
           <PredictorForm onPredict={handlePredict} branches={branches} />
+        )}
+
+        {showLoginModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+            <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-brand-border bg-brand-card p-6 shadow-2xl space-y-6 text-center animate-scaleIn">
+              <button 
+                onClick={() => setShowLoginModal(false)}
+                className="absolute right-4 top-4 rounded-full p-1.5 text-brand-muted hover:bg-brand-bg hover:text-brand-heading transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Lock className="h-7 w-7" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-brand-heading tracking-tight">
+                  Unlock Unlimited Predictions
+                </h3>
+                <p className="text-sm text-brand-muted leading-relaxed">
+                  You have already used your 2 free college predictions. Create a FREE CollegeMate account to continue predicting colleges, save your profile, compare colleges, and unlock unlimited predictions.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    localStorage.setItem('cm_auth_tab', 'signup');
+                    localStorage.setItem('cm_auth_redirect', 'predictor');
+                    setShowLoginModal(false);
+                    if (setActiveTab) setActiveTab('auth');
+                  }}
+                  className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors cursor-pointer"
+                >
+                  Create Free Account
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem('cm_auth_tab', 'login');
+                    localStorage.setItem('cm_auth_redirect', 'predictor');
+                    setShowLoginModal(false);
+                    if (setActiveTab) setActiveTab('auth');
+                  }}
+                  className="flex h-12 w-full items-center justify-center rounded-xl border border-brand-border bg-brand-bg text-sm font-semibold text-brand-heading hover:bg-brand-border/40 transition-colors cursor-pointer"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setShowLoginModal(false)}
+                  className="text-xs font-semibold text-brand-muted hover:text-brand-heading py-2 transition-colors cursor-pointer"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

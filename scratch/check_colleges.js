@@ -13,18 +13,18 @@ envContent.split('\n').forEach(line => {
 const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
 
 async function main() {
-  console.log("Querying colleges from Supabase...");
+  console.log("Querying colleges where city is Maharashtra...");
   const { data: colleges, error } = await supabase
     .from('colleges')
     .select('college_code, college_name, city, university, district')
-    .in('college_code', ['3012', '6006', '6271', '3199', '6175']);
+    .eq('city', 'Maharashtra');
     
   if (error) {
     console.error("Error:", error);
     return;
   }
   
-  console.log("Colleges fetched:", colleges.length);
+  console.log(`Found ${colleges.length} colleges:`);
   colleges.forEach(c => {
     console.log(`- Code: ${c.college_code} | Name: ${c.college_name} | City: ${c.city} | University: ${c.university} | District: ${c.district}`);
   });

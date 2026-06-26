@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Common/Navbar';
 import Footer from './components/Common/Footer';
+import logoImg from './assets/logocm.png';
 const Landing = React.lazy(() => import('./components/Common/Landing'));
 const Dashboard = React.lazy(() => import('./components/Common/Dashboard'));
 const CollegePredictor = React.lazy(() => import('./components/Predictor'));
@@ -86,11 +87,16 @@ function AppContent() {
         window.history.replaceState(null, '', '/login');
         setActiveTab('auth');
       }
-    } else if (['/dashboard', '/profile', '/predictor', '/compare'].includes(path)) {
+    } else if (['/dashboard', '/profile', '/compare'].includes(path)) {
       if (!user) {
         window.history.replaceState(null, '', '/');
         setActiveTab('landing');
       } else if (user.role === 'admin') {
+        window.history.replaceState(null, '', '/admin');
+        setActiveTab('admin');
+      }
+    } else if (path === '/predictor') {
+      if (user?.role === 'admin') {
         window.history.replaceState(null, '', '/admin');
         setActiveTab('admin');
       }
@@ -100,19 +106,33 @@ function AppContent() {
           window.history.replaceState(null, '', '/admin');
           setActiveTab('admin');
         } else {
-          window.history.replaceState(null, '', '/dashboard');
-          setActiveTab('dashboard');
+          const hasRedirect = localStorage.getItem('cm_auth_redirect');
+          if (!hasRedirect) {
+            window.history.replaceState(null, '', '/dashboard');
+            setActiveTab('dashboard');
+          }
         }
       }
     }
   }, [user, activeTab]);
+
+  // Redirect target detection for post-auth routing (e.g. from Predictor)
+  useEffect(() => {
+    if (user) {
+      const redirectTarget = localStorage.getItem('cm_auth_redirect');
+      if (redirectTarget) {
+        localStorage.removeItem('cm_auth_redirect');
+        handleSetActiveTab(redirectTarget);
+      }
+    }
+  }, [user]);
 
   // Tab routing with route protection
   const handleSetActiveTab = (tab, bypassHistory = false) => {
     console.time(`RouteNavigation: ${tab}`);
     setAuthWarning('');
 
-    const protectedTabs = ['dashboard', 'predictor', 'compare', 'profile'];
+    const protectedTabs = ['dashboard', 'compare', 'profile'];
     
     // Admin Route Protection
     if (tab === 'admin') {
@@ -228,7 +248,7 @@ function AppContent() {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-brand-bg transition-colors duration-200">
-        <img src="/src/assets/logocm.png" alt="CollegeMate Logo" className="h-20 w-auto object-contain animate-pulse mb-6" />
+        <img src={logoImg} alt="CollegeMate Logo" className="h-20 w-auto object-contain animate-pulse mb-6" />
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
       </div>
     );
@@ -249,7 +269,7 @@ function AppContent() {
           {activeTab === 'dashboard' && user && (
             <Dashboard setActiveTab={handleSetActiveTab} setCompareColleges={setCompareColleges} />
           )}
-          {activeTab === 'predictor' && <CollegePredictor onBack={handleGoBack} />}
+          {activeTab === 'predictor' && <CollegePredictor onBack={handleGoBack} setActiveTab={handleSetActiveTab} />}
           {activeTab === 'search' && (
             <CollegeSearch 
               setCompareColleges={setCompareColleges} 

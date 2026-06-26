@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import logoImg from '../../assets/logocm.png';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -44,34 +45,28 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
     : (user?.email ? user.email.split('@')[0] : 'User');
   const formattedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
 
-  // Before login: Home, College Predictor, Search Colleges, Compare, Admin Portal
+  // Before login: Predictor, Search, Branch Explorer, Top Rankings
   const beforeLoginLinks = [
-    { id: 'landing', label: 'Home' },
-    { id: 'predictor', label: 'College Predictor' },
-    { id: 'search', label: 'Search Colleges' },
+    { id: 'predictor', label: 'Predictor' },
+    { id: 'search', label: 'Search' },
     { id: 'branches', label: 'Branch Explorer' },
-    { id: 'rankings', label: 'Top Rankings' },
-    { id: 'compare', label: 'Compare' },
-    { id: 'admin-login', label: 'Admin Portal' }
+    { id: 'rankings', label: 'Top Rankings' }
   ];
 
-  // After login: Predictor, Search, Compare
+  // After login: Predictor, Search, Branch Explorer, Top Rankings
   const afterLoginLinks = [
     { id: 'predictor', label: 'Predictor' },
     { id: 'search', label: 'Search' },
     { id: 'branches', label: 'Branch Explorer' },
-    { id: 'rankings', label: 'Top Rankings' },
-    { id: 'compare', label: 'Compare' }
+    { id: 'rankings', label: 'Top Rankings' }
   ];
 
-  // Mobile menu items (Task 5)
+  // Mobile menu items
   const mobileLinks = [
-    { id: 'predictor', label: 'College Predictor' },
-    { id: 'search', label: 'Search Colleges' },
+    { id: 'predictor', label: 'Predictor' },
+    { id: 'search', label: 'Search' },
     { id: 'branches', label: 'Branch Explorer' },
-    { id: 'rankings', label: 'Top Rankings' },
-    { id: 'compare', label: 'Compare' },
-    { id: 'admin-login', label: 'Admin Portal' }
+    { id: 'rankings', label: 'Top Rankings' }
   ];
 
   return (
@@ -84,7 +79,7 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
           onClick={() => handleTabClick('landing')} 
           className="flex cursor-pointer items-center space-x-2.5 hover:opacity-90 shrink-0"
         >
-          <img src="/src/assets/logocm.png" alt="CollegeMate Logo" className="h-9 w-auto object-contain shrink-0" />
+          <img src={logoImg} alt="CollegeMate Logo" className="h-9 w-auto object-contain shrink-0" />
           <span className="text-xl font-bold tracking-tight text-brand-heading">
             College<span className="text-primary">Mate</span>
           </span>
