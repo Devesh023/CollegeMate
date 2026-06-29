@@ -189,18 +189,23 @@ export default function Profile({ onBack }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-brand-heading mb-1.5">Home University Region</label>
+            {/* Note: The label in UI is 'Home Region' for better UX, but we continue to use the database column 'home_university' to maintain compatibility without changing schema. */}
+            <label className="block text-sm font-medium text-brand-heading mb-1.5">Home Region</label>
             <select
               value={homeUniversity}
               onChange={(e) => setHomeUniversity(e.target.value)}
               className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg px-3.5 text-brand-heading focus:border-primary focus:outline-none text-sm"
             >
               <option value="">Not Set</option>
-              <option value="SPPU (Pune)">Savitribai Phule Pune University (SPPU)</option>
-              <option value="MU (Mumbai)">Mumbai University (MU)</option>
-              <option value="Shivaji (Sangli/Kolhapur)">Shivaji University (Sangli/Kolhapur)</option>
-              <option value="DBATU (Statewide)">DBATU (Statewide/Autonomous)</option>
-              <option value="RTMNU (Nagpur)">RTMNU (Nagpur Region)</option>
+              <option value="Pune">Pune</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Nashik">Nashik</option>
+              <option value="Nagpur">Nagpur</option>
+              <option value="Amravati">Amravati</option>
+              <option value="Aurangabad">Aurangabad</option>
+              <option value="Kolhapur">Kolhapur</option>
+              <option value="Nanded">Nanded</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

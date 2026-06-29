@@ -412,7 +412,7 @@ export const collegeBelongsToRegions = (college, selectedRegions) => {
 
 export const predictColleges = (studentProfile, colleges, cutoffs) => {
   console.time("predictorCalculations");
-  const { score, category, admissionType, branchPreference, homeUniversity, gender, selectedRegions, specificCourse } = studentProfile;
+  const { score, category, admissionType, branchPreference, homeUniversity, gender, selectedRegions, specificCourses } = studentProfile;
   const numScore = parseFloat(score);
   const uiAdmissionType = normalizeAdmissionType(admissionType);
 
@@ -482,8 +482,8 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
   const afterBranch = afterCategory.filter(c => branchMatchesPreference(c.branch, branchPreference));
   filterTrace.afterBranch = afterBranch.length;
 
-  const finalBranchFilter = specificCourse
-    ? afterBranch.filter(c => c.branch && c.branch.trim().toLowerCase() === specificCourse.trim().toLowerCase())
+  const finalBranchFilter = (specificCourses && specificCourses.length > 0)
+    ? afterCategory.filter(c => c.branch && specificCourses.some(pref => c.branch.trim().toLowerCase() === pref.trim().toLowerCase()))
     : afterBranch;
 
   console.log('[Predictor] Stage counts:', {
@@ -492,7 +492,7 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
     Year: filterTrace.afterYear,
     Category: filterTrace.afterCategory,
     Branch: filterTrace.afterBranch,
-    SpecificCourse: finalBranchFilter.length
+    SpecificCourses: finalBranchFilter.length
   });
 
   console.log('[Predictor] First 20 records before grouping:', finalBranchFilter.slice(0, 20).map(r => ({
@@ -539,8 +539,51 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
   // Sort relevantCutoffs so we process the latest round first (gives student the best eligibility chance)
   const sortedCutoffs = [...finalBranchFilter].sort((a, b) => parseRoundNumber(b.round) - parseRoundNumber(a.round));
 
+  // Note: To preserve the database schema without changes, the existing 'home_university' 
+  // column is reused to store regional option strings (Pune, Mumbai, Nashik, etc.).
+  // We map these regional options to the college's university name or abbreviation here.
   const homeUniversityMatches = (collegeUniversity, studentUniversity) => {
     if (!collegeUniversity || !studentUniversity) return false;
+    
+    const cleanCol = collegeUniversity.toLowerCase();
+    const cleanStud = studentUniversity.toLowerCase();
+
+    // Direct string containment checks
+    if (cleanCol.includes(cleanStud) || cleanStud.includes(cleanCol)) {
+      return true;
+    }
+
+    // Precise mapping for student home regions to university names/abbreviations
+    if (cleanStud === 'pune') {
+      return cleanCol.includes('sppu') || cleanCol.includes('pune') || cleanCol.includes('solapur') || cleanCol.includes('punyashlok');
+    }
+    if (cleanStud === 'mumbai') {
+      return cleanCol.includes('mumbai') || cleanCol.includes(' mu ') || cleanCol.endsWith(' mu') || cleanCol.startsWith('mu ') || cleanCol.includes('(mu)') || cleanCol.includes('sndt');
+    }
+    if (cleanStud === 'nashik') {
+      // SPPU is the home university for Nashik region
+      return cleanCol.includes('sppu') || cleanCol.includes('pune') || cleanCol.includes('nashik');
+    }
+    if (cleanStud === 'nagpur') {
+      return cleanCol.includes('rtmnu') || cleanCol.includes('nagpur') || cleanCol.includes('gondwana');
+    }
+    if (cleanStud === 'amravati') {
+      return cleanCol.includes('sgbau') || cleanCol.includes('amravati');
+    }
+    if (cleanStud === 'aurangabad') {
+      return cleanCol.includes('bamu') || cleanCol.includes('aurangabad') || cleanCol.includes('marathwada');
+    }
+    if (cleanStud === 'kolhapur') {
+      return cleanCol.includes('shivaji') || cleanCol.includes('kolhapur') || cleanCol.includes('sangli') || cleanCol.includes('satara');
+    }
+    if (cleanStud === 'nanded') {
+      return cleanCol.includes('srtmun') || cleanCol.includes('nanded') || cleanCol.includes('latur');
+    }
+    if (cleanStud === 'other') {
+      return cleanCol.includes('dbatu') || cleanCol.includes('statewide') || cleanCol.includes('autonomous');
+    }
+
+    // Fallback token matching
     const getTokens = (str) => {
       return str
         .toLowerCase()
@@ -550,14 +593,13 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
     };
     const collegeTokens = getTokens(collegeUniversity);
     const studentTokens = getTokens(studentUniversity);
-    const abbreviations = ['sppu', 'rtmnu', 'dbatu', 'mu', 'shivaji'];
+    const abbreviations = ['sppu', 'rtmnu', 'dbatu', 'mu', 'shivaji', 'sgbau', 'bamu', 'srtmun'];
     for (const abbrev of abbreviations) {
       if (collegeTokens.includes(abbrev) && studentTokens.includes(abbrev)) {
         return true;
       }
     }
-    return collegeUniversity.toLowerCase().includes(studentUniversity.toLowerCase()) || 
-           studentUniversity.toLowerCase().includes(collegeUniversity.toLowerCase());
+    return false;
   };
 
   sortedCutoffs.forEach(cutoff => {
@@ -662,7 +704,8 @@ export const predictColleges = (studentProfile, colleges, cutoffs) => {
       difference: parseFloat(difference.toFixed(2)),
       probability: finalProbability,
       matchRating,
-      recommendation: categoryType
+      recommendation: categoryType,
+      isHomeUniversityMatch: !!(homeUniversity && homeUniversityMatches(resolvedUni, homeUniversity))
     };
 
     predictedKeys.set(uniqueKey, predictionResult);

@@ -413,12 +413,16 @@ export default function PredictorResults({ predictions, cutoffs, currentProfile,
                 <strong style={{ color: '#0f172a', fontSize: '14px' }}>{currentProfile?.category} · {currentProfile?.gender}</strong>
               </div>
               <div>
-                <span style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Home University</span>
+                <span style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Home Region</span>
                 <strong style={{ color: '#0f172a', fontSize: '14px' }}>{currentProfile?.homeUniversity || 'MS State'}</strong>
               </div>
               <div>
                 <span style={{ color: '#64748b', display: 'block', marginBottom: '4px' }}>Preferred Branch</span>
-                <strong style={{ color: '#0f172a', fontSize: '14px' }}>{currentProfile?.branchPreference || 'Any Branch'}</strong>
+                <strong style={{ color: '#0f172a', fontSize: '14px' }}>
+                  {currentProfile?.specificCourses && currentProfile.specificCourses.length > 0
+                    ? currentProfile.specificCourses.join(', ')
+                    : (currentProfile?.branchPreference || 'Any Branch')}
+                </strong>
               </div>
             </div>
           </div>
@@ -935,9 +939,9 @@ export default function PredictorResults({ predictions, cutoffs, currentProfile,
                       <p>• The target cutoff for category <strong className="text-brand-heading">{item.matchedCategory || currentProfile.category}</strong> was <strong className="text-brand-heading">{item.cutoffScore}</strong>.</p>
                       <p>• This results in a score delta of <strong className={item.difference >= 0 ? 'text-success font-bold' : 'text-error font-bold'}>{item.difference >= 0 ? `+${item.difference}` : item.difference}</strong>.</p>
                       <p>• Our engine classifies this under the <strong className="uppercase font-extrabold text-primary">{item.recommendation}</strong> bucket based on standard CAP cutoff variance trends.</p>
-                      {currentProfile.homeUniversity && item.university?.includes(currentProfile.homeUniversity) && (
+                      {item.isHomeUniversityMatch && (
                         <p className="text-success font-semibold">
-                          • HU Boost: Your Home University ({currentProfile.homeUniversity}) matches the college region. Home University quota preferences apply.
+                          • HU Boost: Your Home Region ({currentProfile.homeUniversity}) matches the college region. Home Region quota preferences apply.
                         </p>
                       )}
                     </div>
@@ -1289,12 +1293,16 @@ export default function PredictorResults({ predictions, cutoffs, currentProfile,
                   <span className="font-bold text-brand-heading">{currentProfile.category} · {currentProfile.gender}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] text-brand-muted uppercase font-bold">Home University</span>
+                  <span className="block text-[10px] text-brand-muted uppercase font-bold">Home Region</span>
                   <span className="font-bold text-brand-heading">{currentProfile.homeUniversity || 'MS State'}</span>
                 </div>
                 <div>
                   <span className="block text-[10px] text-brand-muted uppercase font-bold">Preferred Course</span>
-                  <span className="font-bold text-brand-heading">{currentProfile.branchPreference || 'Any Branch'}</span>
+                  <span className="font-bold text-brand-heading">
+                    {currentProfile.specificCourses && currentProfile.specificCourses.length > 0
+                      ? currentProfile.specificCourses.join(', ')
+                      : (currentProfile.branchPreference || 'Any Branch')}
+                  </span>
                 </div>
                 <div>
                   <span className="block text-[10px] text-brand-muted uppercase font-bold">Matching Options</span>

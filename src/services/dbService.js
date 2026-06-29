@@ -1398,10 +1398,6 @@ export const dbService = {
       category: profileUpdates.category !== undefined ? (profileUpdates.category || null) : undefined,
       gender: profileUpdates.gender !== undefined ? (profileUpdates.gender || null) : undefined,
       home_university: profileUpdates.homeUniversity !== undefined ? (profileUpdates.homeUniversity || null) : undefined,
-      score: (profileUpdates.score !== undefined && profileUpdates.score !== null && profileUpdates.score !== '') 
-        ? parseFloat(profileUpdates.score) 
-        : (profileUpdates.score === null || profileUpdates.score === '' ? null : undefined),
-      branch_preference: profileUpdates.branchPreference !== undefined ? (profileUpdates.branchPreference || null) : undefined,
       updated_at: new Date()
     };
 

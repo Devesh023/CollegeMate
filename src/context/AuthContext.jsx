@@ -384,6 +384,8 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (updates) => {
     if (!user) return;
     try {
+      const payload = updates;
+      console.log("Profile Update Payload", payload);
       const updatedProfile = await dbService.updateProfile(user.id, updates);
       
       const newUserState = {

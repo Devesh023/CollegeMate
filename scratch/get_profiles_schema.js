@@ -13,13 +13,20 @@ envContent.split('\n').forEach(line => {
 const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
 
 async function main() {
-  const { data, error } = await supabase.from('colleges').select('university').limit(100);
+  console.log("Checking profiles schema...");
+  
+  const { data, error } = await supabase.from('profiles').select('*').limit(1);
   if (error) {
     console.error("Error:", error);
     return;
   }
-  const unis = Array.from(new Set(data.map(c => c.university).filter(Boolean)));
-  console.log("Unique universities in first 100 colleges:", unis);
+  
+  if (data && data.length > 0) {
+    console.log("First profile keys:", Object.keys(data[0]));
+    console.log("First profile data:", data[0]);
+  } else {
+    console.log("No profiles found in the database.");
+  }
 }
 
 main();

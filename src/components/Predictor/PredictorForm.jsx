@@ -21,7 +21,9 @@ import {
   Search,
   CheckCircle,
   AlertCircle,
-  Layers
+  Layers,
+  ChevronDown,
+  X
 } from 'lucide-react';
 
 // Maharashtra districts for the dropdown helper
@@ -54,8 +56,8 @@ export default function PredictorForm({ onPredict, branches = [] }) {
   const [score, setScore] = useState(() => localStorage.getItem('cm_score') || '');
   const [category, setCategory] = useState(() => localStorage.getItem('cm_category') || 'OPEN');
   const [gender, setGender] = useState(() => localStorage.getItem('cm_gender') || 'Male');
-  const [homeUniversity, setHomeUniversity] = useState(() => localStorage.getItem('cm_homeUniversity') || 'SPPU (Pune)');
-  const [branchPreference, setBranchPreference] = useState(() => localStorage.getItem('cm_branchPreference') || '');
+  const [homeUniversity, setHomeUniversity] = useState(() => localStorage.getItem('cm_homeUniversity') || 'Pune');
+  const [branchPreference, setBranchPreference] = useState('');
   const [name, setName] = useState(() => localStorage.getItem('cm_name') || '');
   const [phone, setPhone] = useState(() => localStorage.getItem('cm_phone') || '');
   const [tfws, setTfws] = useState(() => localStorage.getItem('cm_tfws') === 'true');
@@ -88,9 +90,8 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     return localStorage.getItem('cm_selectedBranchGroup') || 'Computer Group';
   });
 
-  const [specificCourse, setSpecificCourse] = useState(() => {
-    return localStorage.getItem('cm_specificCourse') || '';
-  });
+  // Manage specificCourses in component state only, do not save to localStorage
+  const [specificCourses, setSpecificCourses] = useState([]);
 
   // Search filter for branches
   const [branchSearch, setBranchSearch] = useState('');
@@ -105,14 +106,13 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Sync state values to localStorage
+  // Sync state values to localStorage (excluding branchPreference and specificCourses)
   useEffect(() => {
     localStorage.setItem('cm_admissionType', admissionType);
     localStorage.setItem('cm_score', score);
     localStorage.setItem('cm_category', category);
     localStorage.setItem('cm_gender', gender);
     localStorage.setItem('cm_homeUniversity', homeUniversity);
-    localStorage.setItem('cm_branchPreference', branchPreference);
     localStorage.setItem('cm_name', name);
     localStorage.setItem('cm_phone', phone);
     localStorage.setItem('cm_tfws', tfws);
@@ -132,43 +132,41 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     localStorage.setItem('cm_feesPriority', feesPriority);
     localStorage.setItem('cm_selectedRegions', JSON.stringify(selectedRegions));
     localStorage.setItem('cm_selectedBranchGroup', selectedBranchGroup);
-    localStorage.setItem('cm_specificCourse', specificCourse);
-  }, [admissionType, score, category, gender, homeUniversity, branchPreference, name, phone, tfws, ews, minority, capType, district, region, state, govToggle, pvtToggle, autonomous, naac, cityPreference, hostelRequired, placementPriority, feesPriority, selectedRegions, selectedBranchGroup, specificCourse]);
+  }, [admissionType, score, category, gender, homeUniversity, name, phone, tfws, ews, minority, capType, district, region, state, govToggle, pvtToggle, autonomous, naac, cityPreference, hostelRequired, placementPriority, feesPriority, selectedRegions, selectedBranchGroup]);
 
-  // Reset specific course whenever selectedBranchGroup changes (after mount)
+  // Reset specific courses whenever selectedBranchGroup changes (after mount)
   const prevBranchGroupRef = React.useRef(selectedBranchGroup);
   useEffect(() => {
     if (prevBranchGroupRef.current !== selectedBranchGroup) {
-      setSpecificCourse('');
-      localStorage.setItem('cm_specificCourse', '');
+      setSpecificCourses([]);
       prevBranchGroupRef.current = selectedBranchGroup;
     }
   }, [selectedBranchGroup]);
 
-  // Sync selectedRegions to homeUniversity and region
+  // Sync selectedRegions to homeUniversity and region (using the updated region options)
   useEffect(() => {
     if (selectedRegions.includes('Entire Maharashtra')) {
-      setHomeUniversity('SPPU (Pune)');
+      setHomeUniversity('Pune');
       setRegion('West Maharashtra');
     } else {
       const first = selectedRegions[0];
       if (first === 'Pune') {
-        setHomeUniversity('SPPU (Pune)');
+        setHomeUniversity('Pune');
         setRegion('West Maharashtra');
       } else if (first === 'Mumbai' || first === 'Konkan') {
-        setHomeUniversity('MU (Mumbai)');
+        setHomeUniversity('Mumbai');
         setRegion('Mumbai Region');
       } else if (first === 'Nashik') {
-        setHomeUniversity('SPPU (Pune)');
+        setHomeUniversity('Nashik');
         setRegion('North Maharashtra');
       } else if (first === 'Nagpur') {
-        setHomeUniversity('RTMNU (Nagpur)');
+        setHomeUniversity('Nagpur');
         setRegion('Vidarbha');
       } else if (first === 'Amravati') {
-        setHomeUniversity('SGBAU (Amravati)');
+        setHomeUniversity('Amravati');
         setRegion('Vidarbha');
       } else if (first === 'Aurangabad') {
-        setHomeUniversity('DBATU (Statewide)');
+        setHomeUniversity('Aurangabad');
         setRegion('Marathwada');
       }
     }
@@ -284,7 +282,7 @@ export default function PredictorForm({ onPredict, branches = [] }) {
       name,
       phone,
       selectedRegions,
-      specificCourse
+      specificCourses
     });
   };
 
@@ -294,7 +292,7 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     setScore('');
     setCategory('OPEN');
     setGender('Male');
-    setHomeUniversity('SPPU (Pune)');
+    setHomeUniversity('Pune');
     setBranchPreference('');
     setName('');
     setPhone('');
@@ -316,7 +314,7 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     setBranchSearch('');
     setSelectedRegions(['Entire Maharashtra']);
     setSelectedBranchGroup('Computer Group');
-    setSpecificCourse('');
+    setSpecificCourses([]);
     setCurrentStep(0);
     setShowValidation(false);
     onPredict(null);
@@ -334,6 +332,35 @@ export default function PredictorForm({ onPredict, branches = [] }) {
     const uniqueNames = Array.from(new Set(branches.map(b => b.name).filter(Boolean)));
     return uniqueNames.sort((a, b) => a.localeCompare(b));
   }, [branches]);
+
+  // Click outside ref and handler to close the dropdown
+  const dropdownRef = React.useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowBranchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddCourse = (course) => {
+    if (!specificCourses.includes(course)) {
+      setSpecificCourses([...specificCourses, course]);
+    }
+  };
+
+  const handleRemoveCourse = (course) => {
+    setSpecificCourses(specificCourses.filter(c => c !== course));
+  };
+
+  const filteredUniqueBranches = useMemo(() => {
+    if (!branchSearch) return sortedUniqueBranches;
+    return sortedUniqueBranches.filter(name => 
+      name.toLowerCase().includes(branchSearch.toLowerCase())
+    );
+  }, [branchSearch, sortedUniqueBranches]);
 
   const stepTitles = [
     { title: 'Pathway Select', sub: 'MHT-CET or Diploma' },
@@ -468,7 +495,7 @@ export default function PredictorForm({ onPredict, branches = [] }) {
         </div>
 
         {/* Step Card Container */}
-        <div className="rounded-2xl border border-brand-border bg-brand-card p-6 sm:p-8 shadow-sm relative min-h-[420px] flex flex-col justify-between overflow-hidden">
+        <div className="rounded-2xl border border-brand-border bg-brand-card p-6 sm:p-8 shadow-sm relative min-h-[420px] flex flex-col justify-between">
           
           <div className="space-y-6 flex-1">
             
@@ -861,25 +888,97 @@ export default function PredictorForm({ onPredict, branches = [] }) {
 
                       {/* Specific Course Dropdown */}
                       <div className="pt-4 border-t border-brand-border/60 space-y-2">
-                        <label htmlFor="specific-course-select" className="block text-xs font-bold text-brand-heading">
-                          Specific Course (Optional)
+                        <label className="block text-xs font-bold text-brand-heading">
+                          Select Preferred Branches (Optional)
                         </label>
-                        <div className="relative group">
+                        <div className="relative group" ref={dropdownRef}>
                           <GraduationCap className="absolute left-3 top-3.5 h-4.5 w-4.5 text-brand-muted group-focus-within:text-primary transition-colors" />
-                          <select
-                            id="specific-course-select"
-                            value={specificCourse}
-                            onChange={(e) => setSpecificCourse(e.target.value)}
-                            className="block h-12 w-full rounded-xl border border-brand-border bg-brand-bg pl-10 pr-2.5 text-brand-heading focus:border-primary focus:outline-none text-sm cursor-pointer"
+                          <div
+                            onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                            className="flex h-12 w-full items-center justify-between rounded-xl border border-brand-border bg-brand-bg pl-10 pr-3.5 text-brand-heading focus-within:border-primary focus-within:ring-1 focus-within:ring-primary text-sm cursor-pointer select-none"
                           >
-                            <option value="">All Branches in {selectedBranchGroup}</option>
-                            {sortedUniqueBranches.map((name) => (
-                              <option key={name} value={name}>
-                                {name}
-                              </option>
-                            ))}
-                          </select>
+                            <span className={specificCourses.length > 0 ? "text-brand-heading font-medium" : "text-brand-muted"}>
+                              {specificCourses.length > 0 
+                                ? `${specificCourses.length} branch${specificCourses.length > 1 ? 'es' : ''} selected` 
+                                : `All Branches in ${selectedBranchGroup}`}
+                            </span>
+                            <ChevronDown className={`h-4 w-4 text-brand-muted transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} />
+                          </div>
+
+                          {showBranchDropdown && (
+                            <div className="relative mt-1.5 w-full rounded-2xl border border-brand-border bg-brand-card shadow-lg p-3 space-y-2.5 max-h-[500px] flex flex-col">
+                              {/* Search Box */}
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-brand-muted" />
+                                <input
+                                  type="text"
+                                  placeholder="Search preferred branches..."
+                                  value={branchSearch}
+                                  onChange={(e) => setBranchSearch(e.target.value)}
+                                  className="block h-9 w-full rounded-lg border border-brand-border bg-brand-bg pl-9 pr-3 text-brand-heading placeholder:text-brand-muted focus:border-primary focus:outline-none text-xs"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              
+                              {/* Options List */}
+                              <div className="overflow-y-auto custom-scrollbar space-y-0.5 max-h-[420px] pr-1">
+                                {filteredUniqueBranches.length === 0 ? (
+                                  <div className="text-xs text-brand-muted py-3 text-center">No branches found</div>
+                                ) : (
+                                  filteredUniqueBranches.map(name => {
+                                    const isCourseSelected = specificCourses.includes(name);
+                                    return (
+                                      <button
+                                        key={name}
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (isCourseSelected) {
+                                            handleRemoveCourse(name);
+                                          } else {
+                                            handleAddCourse(name);
+                                          }
+                                        }}
+                                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs transition-colors cursor-pointer ${
+                                          isCourseSelected 
+                                            ? 'bg-primary/10 text-primary font-bold' 
+                                            : 'text-brand-heading hover:bg-brand-bg'
+                                        }`}
+                                      >
+                                        <span className="truncate pr-2">{name}</span>
+                                        {isCourseSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
+
+                        {/* Selected Branches Chips */}
+                        {specificCourses.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-2">
+                            {specificCourses.map(course => (
+                              <span 
+                                key={course} 
+                                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-primary/10 text-primary text-xs font-semibold border border-primary/20 animate-fadeIn"
+                              >
+                                <span>{course}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveCourse(course);
+                                  }}
+                                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors cursor-pointer text-primary"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
